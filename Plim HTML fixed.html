@@ -1,0 +1,1803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Five Minutes</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --bg-1: #1a1330;
+    --bg-2: #2a1a45;
+    --bg-3: #3d1f52;
+    --accent-1: #ff8fa3;
+    --accent-2: #ffb26b;
+    --accent-3: #c9a7ff;
+    --text: #f5ecff;
+    --text-dim: #b8a8d6;
+    --card: rgba(255, 255, 255, 0.06);
+    --card-border: rgba(255, 255, 255, 0.12);
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    --radius: 20px;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--text);
+    background: #0f0a1f;
+    overflow-x: hidden;
+  }
+
+  body {
+    background:
+      radial-gradient(1200px 600px at 10% -10%, rgba(255, 143, 163, 0.25), transparent 60%),
+      radial-gradient(900px 600px at 110% 10%, rgba(201, 167, 255, 0.25), transparent 60%),
+      radial-gradient(800px 600px at 50% 120%, rgba(255, 178, 107, 0.22), transparent 60%),
+      linear-gradient(180deg, var(--bg-1), var(--bg-2) 50%, var(--bg-3));
+    background-attachment: fixed;
+    position: relative;
+  }
+
+  /* Animated background */
+  .bg-animation {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .floating-shape {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.3;
+    animation: float 20s infinite ease-in-out;
+  }
+
+  .shape-1 {
+    width: 300px;
+    height: 300px;
+    background: var(--accent-1);
+    top: -150px;
+    left: -150px;
+    animation-delay: 0s;
+  }
+
+  .shape-2 {
+    width: 250px;
+    height: 250px;
+    background: var(--accent-3);
+    top: 50%;
+    right: -125px;
+    animation-delay: -5s;
+  }
+
+  .shape-3 {
+    width: 280px;
+    height: 280px;
+    background: var(--accent-2);
+    bottom: -140px;
+    left: 30%;
+    animation-delay: -10s;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(30px, -30px) scale(1.1); }
+    50% { transform: translate(-20px, 20px) scale(0.9); }
+    75% { transform: translate(20px, 30px) scale(1.05); }
+  }
+
+  .sparkle {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: white;
+    border-radius: 50%;
+    opacity: 0;
+    animation: twinkle 3s infinite;
+  }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 0; transform: scale(0); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+
+  .floating-emoji {
+    position: absolute;
+    font-size: 24px;
+    opacity: 0.15;
+    animation: floatEmoji 25s infinite linear;
+  }
+
+  @keyframes floatEmoji {
+    0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+    10% { opacity: 0.15; }
+    90% { opacity: 0.15; }
+    100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+  }
+
+  .app {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 24px 18px 40px;
+    min-height: 100vh;
+    position: relative;
+    z-index: 1;
+  }
+
+  .screen {
+    display: none;
+    animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .screen.active { display: block; }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .top-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .back-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--card-border);
+    background: var(--card);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    transition: transform 0.15s ease, background 0.2s ease;
+  }
+  .back-btn:active { transform: scale(0.92); }
+
+  .screen-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: 0.3px;
+  }
+
+  /* Mascot */
+  .mascot {
+    text-align: center;
+    margin: 20px 0 8px;
+    position: relative;
+    display: inline-block;
+  }
+
+  .mascot-body {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #fff 0%, #f0e6ff 100%);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    position: relative;
+    margin: 0 auto;
+    box-shadow: 0 8px 24px rgba(255, 143, 163, 0.3);
+    animation: bounce 2s ease-in-out infinite;
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  /* Hair */
+  .mascot-hair {
+    position: absolute;
+    top: -12px;
+    width: 6px;
+    height: 16px;
+    background: #2a1a45;
+    border-radius: 3px 3px 0 0;
+  }
+
+  .hair-1 {
+    left: 22px;
+    transform: rotate(-15deg);
+  }
+
+  .hair-2 {
+    left: 37px;
+    height: 20px;
+    transform: rotate(0deg);
+  }
+
+  .hair-3 {
+    left: 52px;
+    transform: rotate(15deg);
+  }
+
+  .mascot-eyes {
+    position: absolute;
+    top: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .mascot-eye {
+    width: 8px;
+    height: 8px;
+    background: #2a1a45;
+    border-radius: 50%;
+    animation: blink 4s infinite;
+  }
+
+  @keyframes blink {
+    0%, 90%, 100% { transform: scaleY(1); }
+    95% { transform: scaleY(0.1); }
+  }
+
+  .mascot-mouth {
+    position: absolute;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 12px;
+    border: 3px solid #2a1a45;
+    border-top: none;
+    border-radius: 0 0 20px 20px;
+    background: #ff6b9d;
+    overflow: hidden;
+  }
+
+  .mascot-teeth {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 6px;
+    display: flex;
+    gap: 1px;
+  }
+
+  .tooth {
+    flex: 1;
+    background: white;
+    border-radius: 0 0 2px 2px;
+  }
+
+  .tooth.missing {
+    background: transparent;
+  }
+
+  .mascot-cheeks {
+    position: absolute;
+    top: 38px;
+    width: 12px;
+    height: 8px;
+    background: var(--accent-1);
+    border-radius: 50%;
+    opacity: 0.6;
+  }
+
+  .mascot-cheek-left { left: 18px; }
+  .mascot-cheek-right { right: 18px; }
+
+  .mascot-name {
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent-3);
+    margin-top: 8px;
+    letter-spacing: 0.5px;
+  }
+
+  .title {
+    text-align: center;
+    font-size: 34px;
+    font-weight: 800;
+    margin: 6px 0 4px;
+    background: linear-gradient(135deg, var(--accent-1), var(--accent-3) 50%, var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: -0.5px;
+  }
+
+  .subtitle {
+    text-align: center;
+    font-size: 15px;
+    color: var(--text-dim);
+    margin: 0 10px 8px;
+    line-height: 1.5;
+  }
+
+  .friendly-note {
+    text-align: center;
+    font-size: 13px;
+    color: var(--accent-2);
+    margin: 0 10px 28px;
+    font-style: italic;
+  }
+
+  .plim-story {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin: 0 0 20px;
+    backdrop-filter: blur(10px);
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-dim);
+  }
+
+  .plim-story-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent-3);
+    margin-bottom: 8px;
+  }
+
+  .textarea-wrap {
+    position: relative;
+    margin-bottom: 16px;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 160px;
+    padding: 18px;
+    border-radius: var(--radius);
+    border: 1px solid var(--card-border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 16px;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    backdrop-filter: blur(10px);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  textarea::placeholder { color: var(--text-dim); }
+  textarea:focus {
+    border-color: rgba(255, 143, 163, 0.5);
+    box-shadow: 0 0 0 4px rgba(255, 143, 163, 0.1);
+  }
+
+  .primary-btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: var(--radius);
+    border: none;
+    background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+    color: #2a1420;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 10px 24px rgba(255, 143, 163, 0.35);
+    transition: transform 0.15s ease, box-shadow 0.2s ease;
+  }
+  .primary-btn:active { transform: scale(0.97); }
+  .primary-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* Support screen */
+  .support-bubble {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 22px;
+    font-size: 17px;
+    line-height: 1.55;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow);
+    margin-bottom: 22px;
+    position: relative;
+  }
+  .support-bubble::before {
+    content: "💗";
+    position: absolute;
+    top: -14px;
+    left: 18px;
+    background: var(--bg-2);
+    padding: 0 8px;
+    font-size: 20px;
+  }
+
+  .distraction-question {
+    text-align: center;
+    font-size: 16px;
+    color: var(--text);
+    margin: 0 0 14px;
+    font-weight: 600;
+  }
+
+  .section-label {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    margin: 8px 4px 14px;
+    font-weight: 600;
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 20px 14px;
+    text-align: center;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
+  }
+  .card:active { transform: scale(0.95); }
+  .card:hover { border-color: rgba(255, 143, 163, 0.4); }
+
+  .card-emoji {
+    font-size: 34px;
+    margin-bottom: 8px;
+    display: block;
+  }
+  .card-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  /* Loading */
+  .loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    gap: 16px;
+  }
+  .spinner {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.15);
+    border-top-color: var(--accent-1);
+    animation: spin 0.9s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text {
+    color: var(--text-dim);
+    font-size: 14px;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+
+  /* Error */
+  .error-box {
+    background: rgba(255, 100, 100, 0.1);
+    border: 1px solid rgba(255, 100, 100, 0.3);
+    border-radius: var(--radius);
+    padding: 18px;
+    text-align: center;
+    color: #ffc0c0;
+    margin-bottom: 14px;
+  }
+  .error-box .retry {
+    margin-top: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--text);
+    padding: 10px 18px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  /* Joke screen */
+  .joke-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 28px 22px;
+    font-size: 18px;
+    line-height: 1.55;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow);
+    text-align: center;
+    margin-bottom: 20px;
+    min-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Tic-tac-toe */
+  .ttt-status {
+    text-align: center;
+    font-size: 16px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    min-height: 22px;
+  }
+  .ttt-board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    max-width: 340px;
+    margin: 0 auto 20px;
+    aspect-ratio: 1;
+  }
+  .ttt-cell {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    font-size: 44px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    user-select: none;
+  }
+  .ttt-cell:active:not(.taken) { transform: scale(0.95); }
+  .ttt-cell.x { color: var(--accent-1); }
+  .ttt-cell.o { color: var(--accent-3); }
+  .ttt-cell.win {
+    background: rgba(255, 143, 163, 0.15);
+    border-color: var(--accent-1);
+  }
+
+  /* Poem */
+  .topic-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .topic-grid .card { padding: 16px 8px; }
+  .topic-grid .card-emoji { font-size: 28px; margin-bottom: 4px; }
+  .topic-grid .card-label { font-size: 13px; }
+  .topic-grid .card.selected {
+    border-color: var(--accent-1);
+    background: rgba(255, 143, 163, 0.12);
+  }
+
+  .poem-lines {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 22px;
+    margin-bottom: 16px;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow);
+  }
+  .poem-line {
+    padding: 10px 0;
+    font-size: 17px;
+    line-height: 1.5;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+    animation: fadeIn 0.4s ease;
+  }
+  .poem-line:last-child { border-bottom: none; }
+  .poem-line.user { color: var(--accent-2); font-style: italic; }
+  .poem-line.bot { color: var(--accent-3); }
+  .poem-line.typing { color: var(--text-dim); }
+
+  .poem-input {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1px solid var(--card-border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 16px;
+    font-family: inherit;
+    outline: none;
+    margin-bottom: 12px;
+  }
+  .poem-input:focus {
+    border-color: rgba(201, 167, 255, 0.5);
+    box-shadow: 0 0 0 4px rgba(201, 167, 255, 0.1);
+  }
+
+  /* Story */
+  .story-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 24px 22px;
+    font-size: 16px;
+    line-height: 1.6;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+  }
+  .story-title {
+    font-size: 19px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--accent-2);
+  }
+
+  .secondary-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: var(--radius);
+    border: 1px solid var(--card-border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    transition: transform 0.15s ease, background 0.2s ease;
+  }
+  .secondary-btn:active { transform: scale(0.97); }
+
+  .hint {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 10px;
+  }
+
+  .emoji-big {
+    font-size: 60px;
+    text-align: center;
+    margin: 10px 0 16px;
+    filter: drop-shadow(0 6px 18px rgba(255, 143, 163, 0.3));
+  }
+
+  /* Support button */
+  .support-section {
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    text-align: center;
+  }
+
+  .support-btn {
+    display: inline-block;
+    padding: 12px 24px;
+    border-radius: 16px;
+    background: rgba(255, 178, 107, 0.1);
+    border: 1px solid rgba(255, 178, 107, 0.3);
+    color: var(--accent-2);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+    text-decoration: none;
+  }
+  .support-btn:active { transform: scale(0.95); }
+  .support-btn:hover { background: rgba(255, 178, 107, 0.15); }
+
+  /* Plim Secrets */
+  .secrets-card {
+    background: linear-gradient(135deg, rgba(201, 167, 255, 0.15), rgba(255, 143, 163, 0.15));
+    border: 1px solid rgba(201, 167, 255, 0.3);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin: 20px 0;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.2s ease;
+  }
+  .secrets-card:active { transform: scale(0.97); }
+  .secrets-card:hover { border-color: rgba(201, 167, 255, 0.5); }
+
+  .secrets-card-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .secrets-icon {
+    font-size: 32px;
+  }
+
+  .secrets-text {
+    flex: 1;
+  }
+
+  .secrets-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .secrets-subtitle {
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  .secret-item {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.2s ease;
+  }
+  .secret-item:active { transform: scale(0.97); }
+  .secret-item.locked {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .secret-item.unlocked:hover {
+    border-color: rgba(255, 178, 107, 0.4);
+  }
+
+  .secret-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .secret-icon {
+    font-size: 28px;
+  }
+
+  .secret-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .secret-status {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-left: auto;
+  }
+
+  .secret-unlock-info {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 8px;
+  }
+
+  .secret-content {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin: 20px 0;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow);
+  }
+
+  .secret-content-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent-2);
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .secret-content-text {
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text);
+    text-align: center;
+  }
+
+  .achievement {
+    background: linear-gradient(135deg, rgba(255, 178, 107, 0.2), rgba(255, 143, 163, 0.2));
+    border: 2px solid var(--accent-2);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-top: 16px;
+    text-align: center;
+    animation: achievementPop 0.5s ease;
+  }
+
+  @keyframes achievementPop {
+    0% { transform: scale(0.8); opacity: 0; }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .achievement-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+  }
+
+  .achievement-text {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent-2);
+  }
+
+  /* Baby Plim CSS */
+  .baby-plim {
+    width: 120px;
+    height: 120px;
+    margin: 20px auto;
+    position: relative;
+  }
+
+  .baby-plim-body {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #fff 0%, #ffe6f0 100%);
+    border-radius: 50%;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    box-shadow: 0 8px 24px rgba(255, 143, 163, 0.4);
+  }
+
+  .baby-plim-hair {
+    position: absolute;
+    top: 10px;
+    width: 4px;
+    height: 10px;
+    background: #2a1a45;
+    border-radius: 2px 2px 0 0;
+  }
+
+  .baby-hair-1 {
+    left: 35px;
+    transform: rotate(-10deg);
+  }
+
+  .baby-hair-2 {
+    left: 45px;
+    height: 12px;
+  }
+
+  .baby-hair-3 {
+    left: 55px;
+    transform: rotate(10deg);
+  }
+
+  .baby-plim-eyes {
+    position: absolute;
+    top: 45px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .baby-plim-eye {
+    width: 6px;
+    height: 6px;
+    background: #2a1a45;
+    border-radius: 50%;
+  }
+
+  .baby-plim-mouth {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 16px;
+    height: 8px;
+    border: 2px solid #2a1a45;
+    border-top: none;
+    border-radius: 0 0 16px 16px;
+    background: #ff6b9d;
+  }
+
+  .baby-plim-cheeks {
+    position: absolute;
+    top: 52px;
+    width: 8px;
+    height: 6px;
+    background: var(--accent-1);
+    border-radius: 50%;
+    opacity: 0.7;
+  }
+
+  .baby-cheek-left { left: 30px; }
+  .baby-cheek-right { right: 30px; }
+
+  .dramatic-text {
+    animation: dramaticFade 0.8s ease;
+  }
+
+  @keyframes dramaticFade {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<!-- Animated background -->
+<div class="bg-animation">
+  <div class="floating-shape shape-1"></div>
+  <div class="floating-shape shape-2"></div>
+  <div class="floating-shape shape-3"></div>
+</div>
+
+<div class="app">
+
+  <!-- HOME SCREEN -->
+  <div class="screen active" id="screen-home">
+    <div class="mascot">
+      <div class="mascot-body">
+        <div class="mascot-hair hair-1"></div>
+        <div class="mascot-hair hair-2"></div>
+        <div class="mascot-hair hair-3"></div>
+        <div class="mascot-eyes">
+          <div class="mascot-eye"></div>
+          <div class="mascot-eye"></div>
+        </div>
+        <div class="mascot-cheeks mascot-cheek-left"></div>
+        <div class="mascot-cheeks mascot-cheek-right"></div>
+        <div class="mascot-mouth">
+          <div class="mascot-teeth">
+            <div class="tooth"></div>
+            <div class="tooth missing"></div>
+            <div class="tooth"></div>
+            <div class="tooth"></div>
+          </div>
+        </div>
+      </div>
+      <div class="mascot-name">Hi, I'm Plim! 👋</div>
+    </div>
+    <h1 class="title">Five Minutes</h1>
+    <p class="subtitle">Tell me what happened.<br/>Then let's steal five minutes from a bad day.</p>
+    <p class="friendly-note">Not a therapist. Just Plim with snacks.</p>
+    
+    <div class="plim-story">
+      <div class="plim-story-title">About Plim</div>
+      Plim lost his front tooth eating popcorn last Tuesday. He still smiles anyway. He has three hairs because life is complicated enough. He's here to listen, make you laugh, and remind you that bad days are temporary — but snacks are forever. 🍿
+    </div>
+
+    <!-- Plim Secrets Card -->
+    <div class="secrets-card" id="btn-secrets">
+      <div class="secrets-card-content">
+        <div class="secrets-icon">🔒</div>
+        <div class="secrets-text">
+          <div class="secrets-title">Plim Secrets</div>
+          <div class="secrets-subtitle">Unlock hidden stories and jokes</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="textarea-wrap">
+      <textarea id="complaint" placeholder="Spill the tea, rant away, or just say everything sucks — I've got you."></textarea>
+    </div>
+    <button class="primary-btn" id="btn-letout">Let it out</button>
+    <p class="hint">No judgment. Just vibes. 💫</p>
+  </div>
+
+  <!-- SUPPORT SCREEN -->
+  <div class="screen" id="screen-support">
+    <div class="top-bar">
+      <button class="back-btn" data-back="home">←</button>
+      <div class="screen-title">A little hug</div>
+    </div>
+    <div id="support-content"></div>
+  </div>
+
+  <!-- JOKE SCREEN -->
+  <div class="screen" id="screen-joke">
+    <div class="top-bar">
+      <button class="back-btn" data-back="support">←</button>
+      <div class="screen-title">A silly joke</div>
+    </div>
+    <div class="emoji-big">😂</div>
+    <div class="joke-card" id="joke-text">Loading a giggle...</div>
+    <button class="secondary-btn" id="btn-next-joke">Another one 🎲</button>
+  </div>
+
+  <!-- TIC-TAC-TOE SCREEN -->
+  <div class="screen" id="screen-ttt">
+    <div class="top-bar">
+      <button class="back-btn" data-back="support">←</button>
+      <div class="screen-title">Tic-tac-toe</div>
+    </div>
+    <div class="ttt-status" id="ttt-status">You're X. Your move!</div>
+    <div class="ttt-board" id="ttt-board"></div>
+    <button class="secondary-btn" id="btn-ttt-reset">New game 🔄</button>
+  </div>
+
+  <!-- POEM SCREEN -->
+  <div class="screen" id="screen-poem">
+    <div class="top-bar">
+      <button class="back-btn" data-back="support">←</button>
+      <div class="screen-title">Write a poem</div>
+    </div>
+    <div id="poem-content"></div>
+  </div>
+
+  <!-- STORY SCREEN -->
+  <div class="screen" id="screen-story">
+    <div class="top-bar">
+      <button class="back-btn" data-back="support">←</button>
+      <div class="screen-title">A funny story</div>
+    </div>
+    <div class="emoji-big">📖</div>
+    <div class="story-card" id="story-card"></div>
+    <button class="secondary-btn" id="btn-next-story">Another one 🎲</button>
+  </div>
+
+  <!-- PLIM SECRETS SCREEN -->
+  <div class="screen" id="screen-secrets">
+    <div class="top-bar">
+      <button class="back-btn" data-back="home">←</button>
+      <div class="screen-title">Plim Secrets</div>
+    </div>
+    <div id="secrets-content"></div>
+  </div>
+
+  <!-- SECRET DETAIL SCREEN -->
+  <div class="screen" id="screen-secret-detail">
+    <div class="top-bar">
+      <button class="back-btn" data-back="secrets">←</button>
+      <div class="screen-title">Secret</div>
+    </div>
+    <div id="secret-detail-content"></div>
+  </div>
+
+  <!-- Support section (appears on all screens) -->
+  <div class="support-section">
+    <a href="#" class="support-btn" id="support-link">Enjoyed this little friend? Support the project 💛</a>
+  </div>
+
+</div>
+
+<script>
+  const WEBHOOK_URL = "PASTE_YOUR_N8N_WEBHOOK_URL_HERE"; // TODO: e.g. https://anxietycoach.online/webhook/plim-ai
+  const SUPPORT_LINK = "PASTE_YOUR_DONATE_LINK_HERE"; // TODO: Telegram Stars / crypto wallet / donate page
+
+  // Telegram WebApp init
+  try {
+    if (window.Telegram && Telegram.WebApp) {
+      Telegram.WebApp.ready();
+      Telegram.WebApp.expand();
+      Telegram.WebApp.setHeaderColor && Telegram.WebApp.setHeaderColor('#1a1330');
+      Telegram.WebApp.setBackgroundColor && Telegram.WebApp.setBackgroundColor('#1a1330');
+    }
+  } catch (e) { console.warn('TG init failed', e); }
+
+  // Generate sparkles
+  function generateSparkles() {
+    const bg = document.querySelector('.bg-animation');
+    for (let i = 0; i < 30; i++) {
+      const sparkle = document.createElement('div');
+      sparkle.className = 'sparkle';
+      sparkle.style.left = Math.random() * 100 + '%';
+      sparkle.style.top = Math.random() * 100 + '%';
+      sparkle.style.animationDelay = Math.random() * 3 + 's';
+      sparkle.style.animationDuration = (2 + Math.random() * 2) + 's';
+      bg.appendChild(sparkle);
+    }
+  }
+
+  // Generate floating emojis
+  function generateFloatingEmojis() {
+    const bg = document.querySelector('.bg-animation');
+    const emojis = ['✨', '☁️', '😄', '🎈', '💫', '🌟'];
+    for (let i = 0; i < 6; i++) {
+      const emoji = document.createElement('div');
+      emoji.className = 'floating-emoji';
+      emoji.textContent = emojis[i % emojis.length];
+      emoji.style.left = Math.random() * 100 + '%';
+      emoji.style.animationDelay = Math.random() * 25 + 's';
+      emoji.style.animationDuration = (20 + Math.random() * 10) + 's';
+      bg.appendChild(emoji);
+    }
+  }
+
+  generateSparkles();
+  generateFloatingEmojis();
+
+  // Support link
+  document.getElementById('support-link').addEventListener('click', (e) => {
+    e.preventDefault();
+    window.open(SUPPORT_LINK, "_blank");
+  });
+
+  // ---------- Screen navigation ----------
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById('screen-' + id);
+    if (target) target.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  document.querySelectorAll('[data-back]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.getAttribute('data-back');
+      showScreen(target);
+    });
+  });
+
+  // ---------- Helpers ----------
+  function getTelegramUserId() {
+    try {
+      return Telegram.WebApp.initDataUnsafe?.user?.id || null;
+    } catch (e) { return null; }
+  }
+
+  function renderLoading(message = 'Thinking...') {
+    return `
+      <div class="loading">
+        <div class="spinner"></div>
+        <div class="loading-text">${message}</div>
+      </div>
+    `;
+  }
+
+  function renderError(message, retryFn) {
+    return `
+      <div class="error-box">
+        <div>😿 Oops — ${message}</div>
+        <button class="retry" onclick="${retryFn}">Try again</button>
+      </div>
+    `;
+  }
+
+  async function postWebhook(payload) {
+    if (!WEBHOOK_URL || WEBHOOK_URL === "PASTE_YOUR_N8N_WEBHOOK_URL_HERE") {
+      throw new Error('Webhook not configured');
+    }
+    const res = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Server error');
+    return await res.json();
+  }
+
+  // ---------- PLIM SECRETS (real consecutive-day streak) ----------
+  function trackVisit() {
+    const today = new Date();
+    const todayStr = today.toDateString();
+    const lastVisit = localStorage.getItem('plim_lastVisit');
+    let streak = parseInt(localStorage.getItem('plim_streak') || '0');
+
+    // Already counted today — don't touch the streak again
+    if (lastVisit === todayStr) {
+      return streak;
+    }
+
+    if (lastVisit) {
+      const lastDate = new Date(lastVisit);
+      const dayMs = 24 * 60 * 60 * 1000;
+      const diffDays = Math.round(
+        (new Date(todayStr).getTime() - new Date(lastDate.toDateString()).getTime()) / dayMs
+      );
+      if (diffDays === 1) {
+        streak++; // visited yesterday too — streak continues
+      } else {
+        streak = 1; // gap of 2+ days (or visited "in the future") — streak resets
+      }
+    } else {
+      streak = 1; // very first visit ever
+    }
+
+    localStorage.setItem('plim_lastVisit', todayStr);
+    localStorage.setItem('plim_streak', streak.toString());
+    return streak;
+  }
+
+  function getVisitDays() {
+    return parseInt(localStorage.getItem('plim_streak') || '0');
+  }
+
+  function getUnlockedSecrets() {
+    const days = getVisitDays();
+    return {
+      oldestJoke: days >= 7,
+      lostTooth: days >= 14,
+      babyPicture: days >= 21
+    };
+  }
+
+  document.getElementById('btn-secrets').addEventListener('click', () => {
+    trackVisit();
+    showSecretsScreen();
+  });
+
+  function showSecretsScreen() {
+    showScreen('secrets');
+    const unlocked = getUnlockedSecrets();
+    const days = getVisitDays();
+
+    const secretsContent = document.getElementById('secrets-content');
+    secretsContent.innerHTML = `
+      <div class="section-label">Your progress: ${days} days</div>
+      
+      <div class="secret-item ${unlocked.oldestJoke ? 'unlocked' : 'locked'}" data-secret="oldestJoke">
+        <div class="secret-header">
+          <div class="secret-icon">${unlocked.oldestJoke ? '🎭' : '🔒'}</div>
+          <div class="secret-title">The Oldest Joke Ever</div>
+          <div class="secret-status">${unlocked.oldestJoke ? '✓' : ''}</div>
+        </div>
+        <div class="secret-unlock-info">
+          ${unlocked.oldestJoke ? 'Unlocked!' : `Unlocks after 7 daily visits (${Math.max(0, 7 - days)} days left)`}
+        </div>
+      </div>
+
+      <div class="secret-item ${unlocked.lostTooth ? 'unlocked' : 'locked'}" data-secret="lostTooth">
+        <div class="secret-header">
+          <div class="secret-icon">${unlocked.lostTooth ? '🦷' : '🔒'}</div>
+          <div class="secret-title">The Lost Tooth Story</div>
+          <div class="secret-status">${unlocked.lostTooth ? '✓' : ''}</div>
+        </div>
+        <div class="secret-unlock-info">
+          ${unlocked.lostTooth ? 'Unlocked!' : `Unlocks after 14 daily visits (${Math.max(0, 14 - days)} days left)`}
+        </div>
+      </div>
+
+      <div class="secret-item ${unlocked.babyPicture ? 'unlocked' : 'locked'}" data-secret="babyPicture">
+        <div class="secret-header">
+          <div class="secret-icon">${unlocked.babyPicture ? '👶' : '🔒'}</div>
+          <div class="secret-title">Plim's Baby Picture</div>
+          <div class="secret-status">${unlocked.babyPicture ? '✓' : ''}</div>
+        </div>
+        <div class="secret-unlock-info">
+          ${unlocked.babyPicture ? 'Unlocked!' : `Unlocks after 21 daily visits (${Math.max(0, 21 - days)} days left)`}
+        </div>
+      </div>
+    `;
+
+    secretsContent.querySelectorAll('.secret-item.unlocked').forEach(el => {
+      el.addEventListener('click', () => {
+        const secret = el.getAttribute('data-secret');
+        showSecretDetail(secret);
+      });
+    });
+  }
+
+  function showSecretDetail(secret) {
+    showScreen('secret-detail');
+    const detailContent = document.getElementById('secret-detail-content');
+
+    if (secret === 'oldestJoke') {
+      showOldestJoke(detailContent);
+    } else if (secret === 'lostTooth') {
+      showLostToothStory(detailContent);
+    } else if (secret === 'babyPicture') {
+      showBabyPicture(detailContent);
+    }
+  }
+
+  function showOldestJoke(container) {
+    container.innerHTML = `
+      <div class="secret-content">
+        <div class="secret-content-title dramatic-text">The Oldest Joke Ever</div>
+        <div class="secret-content-text dramatic-text" id="joke-reveal">Loading ancient humor...</div>
+      </div>
+    `;
+
+    const reveal = document.getElementById('joke-reveal');
+    
+    setTimeout(() => {
+      reveal.textContent = 'Translating from cave language...';
+      reveal.classList.add('dramatic-text');
+    }, 1500);
+
+    setTimeout(() => {
+      reveal.textContent = 'Ready?';
+      reveal.classList.add('dramatic-text');
+    }, 3000);
+
+    setTimeout(() => {
+      reveal.innerHTML = `
+        <div style="font-size: 24px; font-weight: 700; margin-bottom: 16px;">Merchant...</div>
+      `;
+      reveal.classList.add('dramatic-text');
+    }, 4500);
+
+    setTimeout(() => {
+      reveal.innerHTML += `
+        <div style="margin-top: 20px; font-size: 14px; color: var(--text-dim);">
+          That's it.<br/>
+          People had lower expectations back then.
+        </div>
+        <div class="achievement">
+          <div class="achievement-icon">🏆</div>
+          <div class="achievement-text">Incredible Patience</div>
+        </div>
+      `;
+      reveal.classList.add('dramatic-text');
+    }, 6500);
+  }
+
+  function showLostToothStory(container) {
+    container.innerHTML = `
+      <div class="secret-content">
+        <div class="secret-content-title">🦷 The Lost Tooth Story</div>
+        <div class="secret-content-text" style="text-align: left;">
+          It was a Tuesday. Plim was minding his own business, watching a movie, eating popcorn like a responsible adult.
+          <br/><br/>
+          Then it happened. A kernel. A rogue, unpopped kernel hiding among the fluffy white clouds of joy.
+          <br/><br/>
+          CRUNCH.
+          <br/><br/>
+          Plim's front tooth didn't stand a chance. It flew across the room like a tiny white projectile. His cat chased it. The cat still has it. Plim refuses to negotiate.
+          <br/><br/>
+          Now he smiles with a gap. He says it's aerodynamic. He says it helps him talk faster. He says a lot of things.
+          <br/><br/>
+          The truth? He's brave. And he still eats popcorn. Every Tuesday. 🍿
+        </div>
+      </div>
+    `;
+  }
+
+  function showBabyPicture(container) {
+    container.innerHTML = `
+      <div class="secret-content">
+        <div class="secret-content-title">👶 Baby Plim</div>
+        <div class="baby-plim">
+          <div class="baby-plim-body"></div>
+          <div class="baby-plim-hair baby-hair-1"></div>
+          <div class="baby-plim-hair baby-hair-2"></div>
+          <div class="baby-plim-hair baby-hair-3"></div>
+          <div class="baby-plim-eyes">
+            <div class="baby-plim-eye"></div>
+            <div class="baby-plim-eye"></div>
+          </div>
+          <div class="baby-plim-cheeks baby-cheek-left"></div>
+          <div class="baby-plim-cheeks baby-cheek-right"></div>
+          <div class="baby-plim-mouth"></div>
+        </div>
+        <div class="secret-content-text" style="margin-top: 20px;">
+          Look at those three tiny hairs. Look at that gap-toothed smile. He was adorable. He still is. Some things never change. 💕
+        </div>
+      </div>
+    `;
+  }
+
+  // ---------- HOME -> SUPPORT ----------
+  const btnLetOut = document.getElementById('btn-letout');
+  const complaint = document.getElementById('complaint');
+  const supportContent = document.getElementById('support-content');
+
+  btnLetOut.addEventListener('click', async () => {
+    const text = complaint.value.trim();
+    if (!text) {
+      complaint.focus();
+      complaint.style.borderColor = 'rgba(255, 100, 100, 0.6)';
+      setTimeout(() => complaint.style.borderColor = '', 1200);
+      return;
+    }
+
+    btnLetOut.disabled = true;
+    showScreen('support');
+    supportContent.innerHTML = renderLoading('Listening...');
+
+    try {
+      const data = await postWebhook({
+        type: 'support',
+        text: text,
+        telegram_user_id: getTelegramUserId()
+      });
+
+      const supportText = data?.support || "That sounds rough. I'm glad you told me. Let's take five minutes and make today a little less annoying.";
+
+      supportContent.innerHTML = `
+        <div class="support-bubble">${escapeHtml(supportText)}</div>
+        <div class="distraction-question">Want to distract your brain for a minute?</div>
+        <div class="cards">
+          <div class="card" data-go="joke">
+            <span class="card-emoji">😂</span>
+            <div class="card-label">Make me laugh</div>
+          </div>
+          <div class="card" data-go="ttt">
+            <span class="card-emoji">🎮</span>
+            <div class="card-label">Play tic-tac-toe</div>
+          </div>
+          <div class="card" data-go="poem">
+            <span class="card-emoji">✍️</span>
+            <div class="card-label">Write together</div>
+          </div>
+          <div class="card" data-go="story">
+            <span class="card-emoji">📖</span>
+            <div class="card-label">Tell me a story</div>
+          </div>
+        </div>
+      `;
+
+      supportContent.querySelectorAll('[data-go]').forEach(el => {
+        el.addEventListener('click', () => {
+          const go = el.getAttribute('data-go');
+          if (go === 'joke') showJoke();
+          else if (go === 'ttt') { showScreen('ttt'); resetTTT(); }
+          else if (go === 'poem') startPoem();
+          else if (go === 'story') showStory();
+        });
+      });
+    } catch (err) {
+      const fallbackText = "That sounds rough. I'm glad you told me. Let's take five minutes and make today a little less annoying.";
+      supportContent.innerHTML = `
+        <div class="support-bubble">${escapeHtml(fallbackText)}</div>
+        <div class="distraction-question">Want to distract your brain for a minute?</div>
+        <div class="cards">
+          <div class="card" data-go="joke">
+            <span class="card-emoji">😂</span>
+            <div class="card-label">Make me laugh</div>
+          </div>
+          <div class="card" data-go="ttt">
+            <span class="card-emoji">🎮</span>
+            <div class="card-label">Play tic-tac-toe</div>
+          </div>
+          <div class="card" data-go="poem">
+            <span class="card-emoji">✍️</span>
+            <div class="card-label">Write together</div>
+          </div>
+          <div class="card" data-go="story">
+            <span class="card-emoji">📖</span>
+            <div class="card-label">Tell me a story</div>
+          </div>
+        </div>
+      `;
+
+      supportContent.querySelectorAll('[data-go]').forEach(el => {
+        el.addEventListener('click', () => {
+          const go = el.getAttribute('data-go');
+          if (go === 'joke') showJoke();
+          else if (go === 'ttt') { showScreen('ttt'); resetTTT(); }
+          else if (go === 'poem') startPoem();
+          else if (go === 'story') showStory();
+        });
+      });
+    } finally {
+      btnLetOut.disabled = false;
+    }
+  });
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  }
+
+  // ---------- JOKES ----------
+  const jokes = [
+    "Why don't scientists trust atoms?\nBecause they make up everything. ⚛️",
+    "I told my suitcase there'd be no vacation this year.\nNow I'm dealing with emotional baggage. 🧳",
+    "Why did the coffee file a police report?\nIt got mugged. ☕",
+    "I'm reading a book about anti-gravity.\nIt's impossible to put down. 📚",
+    "Parallel lines have so much in common.\nIt's a shame they'll never meet. 📐",
+    "Why don't eggs tell jokes?\nThey'd crack each other up. 🥚",
+    "I used to hate facial hair...\nbut then it grew on me. 🧔",
+    "What do you call a fake noodle?\nAn impasta. 🍝",
+    "I told my dog a joke about bones.\nHe didn't laugh. He said it was too humerus. 🦴",
+    "Why did the scarecrow win an award?\nBecause he was outstanding in his field. 🌾",
+    "I asked my bank for a loan to start a bakery.\nThey said I didn't have the dough. 🥐",
+    "My therapist says I have a preoccupation with vengeance.\nWe'll see about that. 😤"
+  ];
+
+  function showJoke() {
+    showScreen('joke');
+    const j = jokes[Math.floor(Math.random() * jokes.length)];
+    document.getElementById('joke-text').innerHTML = escapeHtml(j).replace(/\n/g, '<br/>');
+  }
+  document.getElementById('btn-next-joke').addEventListener('click', showJoke);
+
+  // ---------- TIC-TAC-TOE ----------
+  const tttBoard = document.getElementById('ttt-board');
+  const tttStatus = document.getElementById('ttt-status');
+  let tttState, tttOver;
+
+  function resetTTT() {
+    tttState = Array(9).fill('');
+    tttOver = false;
+    tttStatus.textContent = "You're X. Your move!";
+    renderTTT();
+  }
+
+  function renderTTT() {
+    tttBoard.innerHTML = '';
+    tttState.forEach((val, i) => {
+      const cell = document.createElement('div');
+      cell.className = 'ttt-cell' + (val ? ' taken ' + val : '');
+      cell.textContent = val;
+      cell.addEventListener('click', () => tttMove(i));
+      tttBoard.appendChild(cell);
+    });
+  }
+
+  function tttMove(i) {
+    if (tttOver || tttState[i]) return;
+    tttState[i] = 'x';
+    renderTTT();
+    const winner = checkTTTWinner();
+    if (winner) return finishTTT(winner);
+    if (!tttState.includes('')) return finishTTT('draw');
+    tttStatus.textContent = 'Bot is thinking... 🤖';
+    setTimeout(() => {
+      const botMove = tttBotMove();
+      tttState[botMove] = 'o';
+      renderTTT();
+      const w2 = checkTTTWinner();
+      if (w2) return finishTTT(w2);
+      if (!tttState.includes('')) return finishTTT('draw');
+      tttStatus.textContent = "Your turn!";
+    }, 450);
+  }
+
+  function tttBotMove() {
+    const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    for (const p of ['o','x']) {
+      for (const line of lines) {
+        const vals = line.map(i => tttState[i]);
+        if (vals.filter(v => v === p).length === 2 && vals.includes('')) {
+          return line[vals.indexOf('')];
+        }
+      }
+    }
+    if (!tttState[4]) return 4;
+    const corners = [0,2,6,8].filter(i => !tttState[i]);
+    if (corners.length) return corners[Math.floor(Math.random()*corners.length)];
+    const sides = [1,3,5,7].filter(i => !tttState[i]);
+    return sides[Math.floor(Math.random()*sides.length)];
+  }
+
+  function checkTTTWinner() {
+    const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    for (const line of lines) {
+      const [a,b,c] = line;
+      if (tttState[a] && tttState[a] === tttState[b] && tttState[a] === tttState[c]) {
+        setTimeout(() => {
+          const cells = tttBoard.children;
+          [a,b,c].forEach(i => cells[i] && cells[i].classList.add('win'));
+        }, 10);
+        return tttState[a];
+      }
+    }
+    return null;
+  }
+
+  function finishTTT(result) {
+    tttOver = true;
+    if (result === 'x') tttStatus.textContent = '🎉 You won! Take that, bad day.';
+    else if (result === 'o') tttStatus.textContent = '🤖 Bot wins. But you tried, and that counts.';
+    else tttStatus.textContent = "🤝 It's a draw. Like your day — unresolved but fine.";
+  }
+
+  document.getElementById('btn-ttt-reset').addEventListener('click', resetTTT);
+
+  // ---------- POEM (10-line chunks, alternating Plim/human, Finish-or-Continue) ----------
+  const poemContent = document.getElementById('poem-content');
+  const POEM_CHUNK_SIZE = 10;
+  let poemTopic = null;
+  let poemLines = [];
+
+  function startPoem() {
+    poemTopic = null;
+    poemLines = [];
+    showScreen('poem');
+    renderPoemTopics();
+  }
+
+  function renderPoemTopics() {
+    const topics = [
+      { key: 'work', emoji: '💼', label: 'Work' },
+      { key: 'love', emoji: '💘', label: 'Love' },
+      { key: 'life', emoji: '🌱', label: 'Life' },
+      { key: 'cats', emoji: '🐱', label: 'Cats' },
+      { key: 'random', emoji: '🎲', label: 'Random' }
+    ];
+    poemContent.innerHTML = `
+      <div class="section-label">Pick a topic</div>
+      <div class="topic-grid">
+        ${topics.map(t => `
+          <div class="card" data-topic="${t.key}">
+            <span class="card-emoji">${t.emoji}</span>
+            <div class="card-label">${t.label}</div>
+          </div>
+        `).join('')}
+      </div>
+      <p class="hint">Plim starts, you take turns. 10 lines, then you choose: finish or keep going. 💫</p>
+    `;
+    poemContent.querySelectorAll('[data-topic]').forEach(el => {
+      el.addEventListener('click', () => {
+        poemTopic = el.getAttribute('data-topic');
+        generateBotLine('');
+      });
+    });
+  }
+
+  async function generateBotLine(userLine) {
+    poemContent.innerHTML = `
+      ${renderPoemLines()}
+      <div class="poem-line typing">✨ Finding the right words...</div>
+    `;
+
+    let line;
+    try {
+      const data = await postWebhook({
+        type: 'poem',
+        topic: poemTopic,
+        user_line: userLine,
+        line_number: poemLines.length + 1,
+        poem_so_far: poemLines.map(l => l.text),
+        telegram_user_id: getTelegramUserId()
+      });
+      line = data?.line || fallbackBotLine(userLine);
+    } catch (err) {
+      line = fallbackBotLine(userLine);
+    }
+
+    poemLines.push({ who: 'bot', text: line });
+    renderPoemInput();
+  }
+
+  function onPoemUserSubmit(val) {
+    poemLines.push({ who: 'user', text: val });
+    if (poemLines.length % POEM_CHUNK_SIZE === 0) {
+      renderPoemChunkChoice();
+    } else {
+      generateBotLine(val);
+    }
+  }
+
+  function renderPoemChunkChoice() {
+    poemContent.innerHTML = `
+      ${renderPoemLines()}
+      <p class="hint">10 lines down. Keep riding this poem or wrap it up here?</p>
+      <button class="primary-btn" id="poem-continue">Continue +10 ➕</button>
+      <button class="secondary-btn" id="poem-finish">Finish poem 🏁</button>
+    `;
+    document.getElementById('poem-continue').addEventListener('click', () => generateBotLine(''));
+    document.getElementById('poem-finish').addEventListener('click', renderPoemDone);
+  }
+
+  function fallbackBotLine(userLine) {
+    const bank = {
+      work: [
+        "The meeting could have been an email, they said.",
+        "My coffee cup knows all my secrets now.",
+        "The spreadsheet blinked. I blinked back.",
+        "Deadline tomorrow, dreams today."
+      ],
+      love: [
+        "Your laugh is my favorite song on repeat.",
+        "I saved you the last slice of moonlight.",
+        "Even silence sounds like you.",
+        "My heart keeps misspelling your name."
+      ],
+      life: [
+        "The sun showed up uninvited today.",
+        "Small joys are hiding in the pockets of ordinary.",
+        "Tomorrow is a blank page, slightly crumpled.",
+        "I am a work in progress, and that's okay."
+      ],
+      cats: [
+        "The cat judged me silently at 3am.",
+        "A loaf of fur, a king on my keyboard.",
+        "She knocked the glass off. On purpose. Again.",
+        "Purring is the universe's lullaby."
+      ],
+      random: [
+        "A sock escaped the laundry again.",
+        "The moon is just a nightlight for overthinkers.",
+        "Somewhere, a pigeon is winning at life.",
+        "The clouds look like pizza today."
+      ]
+    };
+    const arr = bank[poemTopic] || bank.random;
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function renderPoemLines() {
+    return `
+      <div class="poem-lines">
+        ${poemLines.map(l => `
+          <div class="poem-line ${l.who}">${escapeHtml(l.text)}</div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  function renderPoemInput() {
+    poemContent.innerHTML = `
+      ${renderPoemLines()}
+      <input class="poem-input" id="poem-input" placeholder="Your line..." maxlength="120" />
+      <button class="primary-btn" id="poem-submit">Add my line ✨</button>
+    `;
+    const input = document.getElementById('poem-input');
+    const btn = document.getElementById('poem-submit');
+    input.focus();
+    const submit = () => {
+      const val = input.value.trim();
+      if (!val) return;
+      onPoemUserSubmit(val);
+    };
+    btn.addEventListener('click', submit);
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') submit();
+    });
+  }
+
+  function renderPoemDone() {
+    poemContent.innerHTML = `
+      ${renderPoemLines()}
+      <p class="hint">🎉 Your poem is complete. Save it. Share it. Read it when the day is heavy.</p>
+      <button class="secondary-btn" id="poem-again">Write another 📝</button>
+    `;
+    document.getElementById('poem-again').addEventListener('click', startPoem);
+  }
+
+  // ---------- STORIES ----------
+  const stories = [
+    {
+      title: "The Sock Rebellion",
+      body: "I did laundry yesterday. Put in 12 socks. Got out 11. The missing one left a note: 'Gone to find myself. Don't wait up.' I'm now negotiating with the dryer."
+    },
+    {
+      title: "The Cat Interview",
+      body: "My cat applied for a job as my life coach. Her first piece of advice: nap for 16 hours, scream at nothing at 4am, and knock things off tables to 'stay grounded.' Honestly? Better than my last coach."
+    },
+    {
+      title: "The Zoom Ghost",
+      body: "During a meeting, my cat walked across the keyboard and unmuted me mid-sentence. I was saying, 'and that's why I think the client is basically a potato.' The client was on the call. I still have a job. Barely."
+    },
+    {
+      title: "The Avocado Betrayal",
+      body: "I bought an avocado on Monday. Checked it Tuesday: hard as a rock. Wednesday: still hard. Thursday: hard. Friday: suddenly perfect. Saturday: brown. The avocado played me like a violin."
+    },
+    {
+      title: "The Password Crisis",
+      body: "Website: 'Your password must contain an uppercase, a number, a symbol, a hieroglyph, and the blood of a unicorn.' Me: okay. Website: 'Password cannot be the same as your last 47 passwords.' Me: *cries in ancient Sumerian*"
+    },
+    {
+      title: "The Grocery Quest",
+      body: "Went to the store for milk. Came home with: hummus, a candle that smells like 'autumn forest', fancy cheese, and zero milk. Dinner is cheese and vibes."
+    },
+    {
+      title: "The Alarm Clock War",
+      body: "Set 7 alarms. Snoozed all 7. Woke up in a panic, ran to the kitchen, made coffee, drank it, realized it was Saturday. The alarms are laughing at me. I can hear them."
+    },
+    {
+      title: "The Plant Funeral",
+      body: "My plant died. I watered it too much. Then I watered it less. Then I talked to it. Then I played it music. It still died. I held a small ceremony. The cactus next to it looked relieved."
+    }
+  ];
+
+  function showStory() {
+    showScreen('story');
+    const s = stories[Math.floor(Math.random() * stories.length)];
+    document.getElementById('story-card').innerHTML = `
+      <div class="story-title">${escapeHtml(s.title)}</div>
+      <div>${escapeHtml(s.body)}</div>
+    `;
+  }
+  document.getElementById('btn-next-story').addEventListener('click', showStory);
+
+  // Track visit on app load
+  trackVisit();
+
+</script>
+</body>
+</html>
