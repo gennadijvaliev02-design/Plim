@@ -1,0 +1,2898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Five Minutes</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --bg-1: #1a1330;
+    --bg-2: #2a1a45;
+    --bg-3: #3d1f52;
+    --accent-1: #ff8fa3;
+    --accent-2: #ffb26b;
+    --accent-3: #c9a7ff;
+    --text: #f5ecff;
+    --text-dim: #b8a8d6;
+    --card: rgba(255, 255, 255, 0.06);
+    --card-border: rgba(255, 255, 255, 0.12);
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    --radius: 20px;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--text);
+    background: #0f0a1f;
+    overflow-x: hidden;
+  }
+
+  body {
+    background:
+      radial-gradient(1200px 600px at 10% -10%, rgba(255, 143, 163, 0.25), transparent 60%),
+      radial-gradient(900px 600px at 110% 10%, rgba(201, 167, 255, 0.25), transparent 60%),
+      radial-gradient(800px 600px at 50% 120%, rgba(255, 178, 107, 0.22), transparent 60%),
+      linear-gradient(180deg, var(--bg-1), var(--bg-2) 50%, var(--bg-3));
+    background-attachment: fixed;
+    position: relative;
+  }
+
+  /* Animated background */
+  .bg-animation {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .floating-shape {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.3;
+    animation: float 20s infinite ease-in-out;
+  }
+
+  .shape-1 {
+    width: 300px;
+    height: 300px;
+    background: var(--accent-1);
+    top: -150px;
+    left: -150px;
+    animation-delay: 0s;
+  }
+
+  .shape-2 {
+    width: 250px;
+    height: 250px;
+    background: var(--accent-3);
+    top: 50%;
+    right: -125px;
+    animation-delay: -5s;
+  }
+
+  .shape-3 {
+    width: 280px;
+    height: 280px;
+    background: var(--accent-2);
+    bottom: -140px;
+    left: 30%;
+    animation-delay: -10s;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(30px, -30px) scale(1.1); }
+    50% { transform: translate(-20px, 20px) scale(0.9); }
+    75% { transform: translate(20px, 30px) scale(1.05); }
+  }
+
+  .sparkle {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: white;
+    border-radius: 50%;
+    opacity: 0;
+    animation: twinkle 3s infinite;
+  }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 0; transform: scale(0); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+
+  .floating-emoji {
+    position: absolute;
+    font-size: 24px;
+    opacity: 0.15;
+    animation: floatEmoji 25s infinite linear;
+  }
+
+  @keyframes floatEmoji {
+    0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+    10% { opacity: 0.15; }
+    90% { opacity: 0.15; }
+    100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+  }
+
+  .app {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 24px 18px 40px;
+    min-height: 100vh;
+    position: relative;
+    z-index: 1;
+  }
+
+  .screen {
+    display: none;
+    animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .screen.active { display: block; }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .top-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .back-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--card-border);
+    background: var(--card);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    transition: transform 0.15s ease, background 0.2s ease;
+  }
+  .back-btn:active { transform: scale(0.92); }
+
+  .screen-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: 0.3px;
+  }
+
+  /* Mascot */
+  .mascot {
+    text-align: center;
+    margin: 20px 0 8px;
+    position: relative;
+    display: inline-block;
+  }
+
+  .mascot-body {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #fff 0%, #f0e6ff 100%);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    position: relative;
+    margin: 0 auto;
+    box-shadow: 0 8px 24px rgba(255, 143, 163, 0.3);
+    animation: bounce 2s ease-in-out infinite;
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  /* Hair */
+  .mascot-hair {
+    position: absolute;
+    top: -12px;
+    width: 6px;
+    height: 16px;
+    background: #2a1a45;
+    border-radius: 3px 3px 0 0;
+  }
+
+  .hair-1 {
+    left: 22px;
+    transform: rotate(-15deg);
+  }
+
+  .hair-2 {
+    left: 37px;
+    height: 20px;
+    transform: rotate(0deg);
+  }
+
+  .hair-3 {
+    left: 52px;
+    transform: rotate(15deg);
+  }
+
+  .mascot-eyes {
+    position: absolute;
+    top: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .mascot-eye {
+    width: 8px;
+    height: 8px;
+    background: #2a1a45;
+    border-radius: 50%;
+    animation: blink 4s infinite;
+  }
+
+  @keyframes blink {
+    0%, 90%, 100% { transform: scaleY(1); }
+    95% { transform: scaleY(0.1); }
+  }
+
+  .mascot-mouth {
+    position: absolute;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 12px;
+    border: 3px solid #2a1a45;
+    border-top: none;
+    border-radius: 0 0 20px 20px;
+    background: #ff6b9d;
+    overflow: hidden;
+  }
+
+  .mascot-teeth {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 6px;
+    display: flex;
+    gap: 1px;
+  }
+
+  .tooth {
+    flex: 1;
+    background: white;
+    border-radius: 0 0 2px 2px;
+  }
+
+  .tooth.missing {
+    background: transparent;
+  }
+
+  .mascot-cheeks {
+    position: absolute;
+    top: 38px;
+    width: 12px;
+    height: 8px;
+    background: var(--accent-1);
+    border-radius: 50%;
+    opacity: 0.6;
+  }
+
+  .mascot-cheek-left { left: 18px; }
+  .mascot-cheek-right { right: 18px; }
+
+  .mascot-name {
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent-3);
+    margin-top: 8px;
+    letter-spacing: 0.5px;
+  }
+
+  .title {
+    text-align: center;
+    font-size: 34px;
+    font-weight: 800;
+    margin: 6px 0 4px;
+    background: linear-gradient(135deg, var(--accent-1), var(--accent-3) 50%, var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: -0.5px;
+  }
+
+  .subtitle {
+    text-align: center;
+    font-size: 15px;
+    color: var(--text-dim);
+    margin: 0 10px 8px;
+    line-height: 1.5;
+  }
+
+  .friendly-note {
+    text-align: center;
+    font-size: 13px;
+    color: var(--accent-2);
+    margin: 0 10px 28px;
+    font-style: italic;
+  }
+
+  .plim-story {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin: 0 0 20px;
+    backdrop-filter: blur(10px);
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-dim);
+  }
+
+  .plim-story-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent-3);
+    margin-bottom: 8px;
+  }
+
+  .textarea-wrap {
+    position: relative;
+    margin-bottom: 16px;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 160px;
+    padding: 18px;
+    border-radius: var(--radius);
+    border: 1px solid var(--card-border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 16px;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    backdrop-filter: blur(10px);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  textarea::placeholder { color: var(--text-dim); }
+  textarea:focus {
+    border-color: rgba(255, 143, 163, 0.5);
+    box-shadow: 0 0 0 4px rgba(255, 143, 163, 0.1);
+  }
+
+  .primary-btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: var(--radius);
+    border: none;
+    background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+    color: #2a1420;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 10px 24px rgba(255, 143, 163, 0.35);
+    transition: transform 0.15s ease, box-shadow 0.2s ease;
+  }
+  .primary-btn:active { transform: scale(0.97); }
+  .primary-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* Support screen */
+  .support-bubble {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 22px;
+    font-size: 17px;
+    line-height: 1.55;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow);
+    margin-bottom: 22px;
+    position: relative;
+  }
+  .support-bubble::before {
+    content: "💗";
+    position: absolute;
+    top: -14px;
+    left: 18px;
+    background: var(--bg-2);
+    padding: 0 8px;
+    font-size: 20px;
+  }
+
+  .distraction-question {
+    text-align: center;
+    font-size: 16px;
+    color: var(--text);
+    margin: 0 0 14px;
+    font-weight: 600;
+  }
+
+  .section-label {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    margin: 8px 4px 14px;
+    font-weight: 600;
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 20px 14px;
+    text-align: center;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
+  }
+  .card:active { transform: scale(0.95); }
+  .card:hover { border-color: rgba(255, 143, 163, 0.4); }
+
+  .card-emoji {
+    font-size: 34px;
+    margin-bottom: 8px;
+    display: block;
+  }
+  .card-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  /* Loading */
+  .loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    gap: 16px;
+  }
+  .spinner {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.15);
+    border-top-color: var(--accent-1);
+    animation: spin 0.9s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text {
+    color: var(--text-dim);
+    font-size: 14px;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+
+  /* Error */
+  .error-box {
+    background: rgba(255, 100, 100, 0.1);
+    border: 1px solid rgba(255, 100, 100, 0.3);
+    border-radius: var(--radius);
+    padding: 18px;
+    text-align: center;
+    color: #ffc0c0;
+    margin-bottom: 14px;
+  }
+  .error-box .retry {
+    margin-top: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--text);
+    padding: 10px 18px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  /* Joke screen */
+  .joke-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 28px 22px;
+    font-size: 18px;
+    line-height: 1.55;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow);
+    text-align: center;
+    margin-bottom: 20px;
+    min-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Tic-tac-toe */
+  .ttt-status {
+    text-align: center;
+    font-size: 16px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    min-height: 22px;
+  }
+  .ttt-board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    max-width: 340px;
+    margin: 0 auto 20px;
+    aspect-ratio: 1;
+  }
+  .ttt-cell {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    font-size: 44px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    user-select: none;
+  }
+  .ttt-cell:active:not(.taken) { transform: scale(0.95); }
+  .ttt-cell.x { color: var(--accent-1); }
+  .ttt-cell.o { color: var(--accent-3); }
+  .ttt-cell.win {
+    background: rgba(255, 143, 163, 0.15);
+    border-color: var(--accent-1);
+  }
+
+  /* Poem */
+  .topic-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .topic-grid .card { padding: 16px 8px; }
+  .topic-grid .card-emoji { font-size: 28px; margin-bottom: 4px; }
+  .topic-grid .card-label { font-size: 13px; }
+  .topic-grid .card.selected {
+    border-color: var(--accent-1);
+    background: rgba(255, 143, 163, 0.12);
+  }
+
+  .poem-lines {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 22px;
+    margin-bottom: 16px;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow);
+  }
+  .poem-line {
+    padding: 10px 0;
+    font-size: 17px;
+    line-height: 1.5;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+    animation: fadeIn 0.4s ease;
+  }
+  .poem-line:last-child { border-bottom: none; }
+  .poem-line.user { color: var(--accent-2); font-style: italic; }
+  .poem-line.bot { color: var(--accent-3); }
+  .poem-line.typing { color: var(--text-dim); }
+
+  .poem-input {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1px solid var(--card-border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 16px;
+    font-family: inherit;
+    outline: none;
+    margin-bottom: 12px;
+  }
+  .poem-input:focus {
+    border-color: rgba(201, 167, 255, 0.5);
+    box-shadow: 0 0 0 4px rgba(201, 167, 255, 0.1);
+  }
+
+  /* Story */
+  .story-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 24px 22px;
+    font-size: 16px;
+    line-height: 1.6;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+  }
+  .story-title {
+    font-size: 19px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--accent-2);
+  }
+
+  .secondary-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: var(--radius);
+    border: 1px solid var(--card-border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    transition: transform 0.15s ease, background 0.2s ease;
+  }
+  .secondary-btn:active { transform: scale(0.97); }
+
+  .hint {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 10px;
+  }
+
+  .emoji-big {
+    font-size: 60px;
+    text-align: center;
+    margin: 10px 0 16px;
+    filter: drop-shadow(0 6px 18px rgba(255, 143, 163, 0.3));
+  }
+
+  /* Support button */
+  .support-section {
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    text-align: center;
+  }
+
+  .support-btn {
+    display: inline-block;
+    padding: 12px 24px;
+    border-radius: 16px;
+    background: rgba(255, 178, 107, 0.1);
+    border: 1px solid rgba(255, 178, 107, 0.3);
+    color: var(--accent-2);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+    text-decoration: none;
+  }
+  .support-btn:active { transform: scale(0.95); }
+  .support-btn:hover { background: rgba(255, 178, 107, 0.15); }
+
+  /* Plim Secrets */
+  .secrets-card {
+    background: linear-gradient(135deg, rgba(201, 167, 255, 0.15), rgba(255, 143, 163, 0.15));
+    border: 1px solid rgba(201, 167, 255, 0.3);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin: 20px 0;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.2s ease;
+  }
+  .secrets-card:active { transform: scale(0.97); }
+  .secrets-card:hover { border-color: rgba(201, 167, 255, 0.5); }
+
+  .secrets-card-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .secrets-icon {
+    font-size: 32px;
+  }
+
+  .secrets-text {
+    flex: 1;
+  }
+
+  .secrets-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .secrets-subtitle {
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  .secret-item {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.2s ease;
+  }
+  .secret-item:active { transform: scale(0.97); }
+  .secret-item.locked {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .secret-item.unlocked:hover {
+    border-color: rgba(255, 178, 107, 0.4);
+  }
+
+  .secret-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .secret-icon {
+    font-size: 28px;
+  }
+
+  .secret-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .secret-status {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-left: auto;
+  }
+
+  .secret-unlock-info {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 8px;
+  }
+
+  .secret-content {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin: 20px 0;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow);
+  }
+
+  .secret-content-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent-2);
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .secret-content-text {
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text);
+    text-align: center;
+  }
+
+  .achievement {
+    background: linear-gradient(135deg, rgba(255, 178, 107, 0.2), rgba(255, 143, 163, 0.2));
+    border: 2px solid var(--accent-2);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-top: 16px;
+    text-align: center;
+    animation: achievementPop 0.5s ease;
+  }
+
+  @keyframes achievementPop {
+    0% { transform: scale(0.8); opacity: 0; }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .achievement-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+  }
+
+  .achievement-text {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent-2);
+  }
+
+  /* Baby Plim CSS */
+  .baby-plim {
+    width: 120px;
+    height: 120px;
+    margin: 20px auto;
+    position: relative;
+  }
+
+  .baby-plim-body {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #fff 0%, #ffe6f0 100%);
+    border-radius: 50%;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    box-shadow: 0 8px 24px rgba(255, 143, 163, 0.4);
+  }
+
+  .baby-plim-hair {
+    position: absolute;
+    top: 10px;
+    width: 4px;
+    height: 10px;
+    background: #2a1a45;
+    border-radius: 2px 2px 0 0;
+  }
+
+  .baby-hair-1 {
+    left: 35px;
+    transform: rotate(-10deg);
+  }
+
+  .baby-hair-2 {
+    left: 45px;
+    height: 12px;
+  }
+
+  .baby-hair-3 {
+    left: 55px;
+    transform: rotate(10deg);
+  }
+
+  .baby-plim-eyes {
+    position: absolute;
+    top: 45px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .baby-plim-eye {
+    width: 6px;
+    height: 6px;
+    background: #2a1a45;
+    border-radius: 50%;
+  }
+
+  .baby-plim-mouth {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 16px;
+    height: 8px;
+    border: 2px solid #2a1a45;
+    border-top: none;
+    border-radius: 0 0 16px 16px;
+    background: #ff6b9d;
+  }
+
+  .baby-plim-cheeks {
+    position: absolute;
+    top: 52px;
+    width: 8px;
+    height: 6px;
+    background: var(--accent-1);
+    border-radius: 50%;
+    opacity: 0.7;
+  }
+
+  .baby-cheek-left { left: 30px; }
+  .baby-cheek-right { right: 30px; }
+
+  .dramatic-text {
+    animation: dramaticFade 0.8s ease;
+  }
+
+  @keyframes dramaticFade {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+
+  /* ---------- Living Plim companion + chat ---------- */
+  .plim-companion {
+    position: fixed;
+    right: 18px;
+    bottom: 92px;
+    width: 98px;
+    height: 118px;
+    z-index: 20;
+    pointer-events: none;
+    transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+    filter: drop-shadow(0 12px 24px rgba(0,0,0,0.35));
+  }
+
+  .plim-companion-inner {
+    width: 92px;
+    height: 92px;
+    position: relative;
+    animation: plimHop 1.7s ease-in-out infinite;
+  }
+
+  @keyframes plimHop {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    45% { transform: translateY(-16px) rotate(3deg); }
+    60% { transform: translateY(-10px) rotate(-1deg); }
+  }
+
+  .plim-companion-body {
+    width: 92px;
+    height: 92px;
+    background: linear-gradient(135deg, #fff 0%, #f7e9ff 100%);
+    border-radius: 50% 50% 48% 48% / 58% 58% 42% 42%;
+    position: relative;
+    box-shadow: 0 10px 28px rgba(255, 143, 163, 0.34);
+  }
+
+  .plim-companion .p-hair {
+    position: absolute;
+    top: -12px;
+    width: 6px;
+    height: 17px;
+    background: #2a1a45;
+    border-radius: 3px 3px 0 0;
+    z-index: 2;
+  }
+  .plim-companion .p-hair.one { left: 27px; transform: rotate(-15deg); }
+  .plim-companion .p-hair.two { left: 43px; height: 22px; }
+  .plim-companion .p-hair.three { left: 59px; transform: rotate(15deg); }
+
+  .plim-companion .p-eyes {
+    position: absolute;
+    top: 34px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 44px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .plim-companion .p-eye {
+    width: 9px;
+    height: 9px;
+    background: #2a1a45;
+    border-radius: 50%;
+    animation: plimBlink 5s infinite;
+  }
+
+  @keyframes plimBlink {
+    0%, 92%, 100% { transform: scaleY(1); }
+    95% { transform: scaleY(0.08); }
+  }
+
+  .plim-companion .p-cheek {
+    position: absolute;
+    top: 45px;
+    width: 13px;
+    height: 9px;
+    background: var(--accent-1);
+    border-radius: 50%;
+    opacity: 0.62;
+  }
+  .plim-companion .p-cheek.left { left: 20px; }
+  .plim-companion .p-cheek.right { right: 20px; }
+
+  .plim-companion .p-mouth {
+    position: absolute;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    width: 28px;
+    height: 15px;
+    border: 3px solid #2a1a45;
+    border-top: none;
+    border-radius: 0 0 20px 20px;
+    background: #ff6b9d;
+    transition: all 0.25s ease;
+    overflow: hidden;
+  }
+
+  .plim-companion .p-teeth {
+    position: absolute;
+    top: 0;
+    left: 2px;
+    right: 2px;
+    height: 7px;
+    display: flex;
+    gap: 1px;
+    z-index: 2;
+  }
+
+  .plim-companion .p-tooth {
+    flex: 1;
+    background: #fff;
+    border-radius: 0 0 3px 3px;
+  }
+
+  .plim-companion .p-tooth.missing {
+    background: transparent;
+  }
+
+  .plim-companion .p-foot {
+    position: absolute;
+    bottom: -6px;
+    width: 18px;
+    height: 7px;
+    background: rgba(255,255,255,0.85);
+    border-radius: 50%;
+  }
+  .plim-companion .p-foot.left { left: 22px; }
+  .plim-companion .p-foot.right { right: 22px; }
+
+  .plim-companion.emotion-laughing .p-eye,
+  .plim-companion.emotion-happy .p-eye {
+    height: 5px;
+    border-radius: 8px;
+    transform: scaleY(0.6);
+  }
+  .plim-companion.emotion-laughing .p-mouth {
+    width: 34px;
+    height: 22px;
+  }
+  .plim-companion.emotion-thinking .p-mouth {
+    width: 13px;
+    height: 8px;
+    border-radius: 50%;
+    border-top: 3px solid #2a1a45;
+    background: transparent;
+  }
+  .plim-companion.emotion-surprised .p-eye {
+    width: 12px;
+    height: 12px;
+  }
+  .plim-companion.emotion-surprised .p-mouth {
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    border-top: 3px solid #2a1a45;
+  }
+  .plim-companion.emotion-supportive .p-eye {
+    width: 10px;
+    height: 12px;
+  }
+  .plim-companion.emotion-supportive .p-mouth {
+    width: 24px;
+    height: 9px;
+    background: transparent;
+  }
+
+  .plim-companion.emotion-thinking .p-teeth,
+  .plim-companion.emotion-surprised .p-teeth,
+  .plim-companion.emotion-supportive .p-teeth {
+    display: none;
+  }
+
+  .chat-shell {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 130px);
+    gap: 12px;
+  }
+
+  .chat-messages {
+    min-height: 360px;
+    max-height: calc(100vh - 250px);
+    overflow-y: auto;
+    padding: 8px 2px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    scroll-behavior: smooth;
+  }
+
+  .chat-bubble {
+    max-width: 82%;
+    padding: 13px 15px;
+    border-radius: 18px;
+    line-height: 1.45;
+    font-size: 15px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.22);
+    animation: fadeIn 0.24s ease;
+  }
+
+  .chat-bubble.user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+    color: #2a1420;
+    border-bottom-right-radius: 6px;
+  }
+
+  .chat-bubble.plim {
+    align-self: flex-start;
+    background: var(--card);
+    color: var(--text);
+    border: 1px solid var(--card-border);
+    border-bottom-left-radius: 6px;
+    backdrop-filter: blur(10px);
+  }
+
+  .chat-bubble.thinking {
+    color: var(--text-dim);
+    font-style: italic;
+  }
+
+  .chat-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    position: sticky;
+    bottom: 0;
+    background: linear-gradient(180deg, transparent, rgba(26, 19, 48, 0.94) 35%);
+    padding-top: 12px;
+  }
+
+  .chat-input {
+    flex: 1;
+    min-height: 48px;
+    max-height: 110px;
+    padding: 13px 14px;
+    border-radius: 16px;
+    border: 1px solid var(--card-border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 15px;
+    font-family: inherit;
+    outline: none;
+    resize: none;
+    backdrop-filter: blur(10px);
+  }
+
+  .chat-send-btn {
+    width: 52px;
+    height: 48px;
+    border-radius: 16px;
+    border: none;
+    background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+    color: #2a1420;
+    font-size: 20px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(255, 143, 163, 0.28);
+  }
+
+  .chat-distractions {
+    margin-top: 8px;
+  }
+
+  @media (max-width: 420px) {
+    .plim-companion {
+      width: 78px;
+      height: 96px;
+      right: 12px;
+      bottom: 86px;
+    }
+    .plim-companion-inner,
+    .plim-companion-body {
+      width: 72px;
+      height: 72px;
+    }
+    .plim-companion .p-eyes { top: 27px; width: 34px; }
+    .plim-companion .p-mouth { bottom: 14px; transform: translateX(-50%) scale(0.86); }
+    .plim-companion .p-cheek { top: 36px; }
+    .plim-companion .p-cheek.left { left: 15px; }
+    .plim-companion .p-cheek.right { right: 15px; }
+    .plim-companion .p-hair.one { left: 21px; }
+    .plim-companion .p-hair.two { left: 34px; }
+    .plim-companion .p-hair.three { left: 47px; }
+  }
+
+
+  /* Games menu + extra Plim games */
+  .games-menu-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin: 18px 0 20px;
+  }
+
+  .game-menu-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    transition: transform 0.15s ease, border-color 0.2s ease, background 0.2s ease;
+  }
+  .game-menu-card:active { transform: scale(0.97); }
+  .game-menu-card:hover { border-color: rgba(255, 143, 163, 0.4); }
+
+  .game-menu-emoji { font-size: 34px; width: 42px; text-align: center; }
+  .game-menu-title { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+  .game-menu-subtitle { font-size: 13px; color: var(--text-dim); line-height: 1.35; }
+
+  .plim-game-comment {
+    background: rgba(201, 167, 255, 0.10);
+    border: 1px solid rgba(201, 167, 255, 0.22);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin: 12px 0 16px;
+    font-size: 15px;
+    line-height: 1.45;
+    color: var(--text);
+    backdrop-filter: blur(10px);
+  }
+
+  .battleship-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    max-width: 340px;
+    margin: 0 auto 18px;
+  }
+
+  .battleship-cell {
+    aspect-ratio: 1;
+    border-radius: 14px;
+    border: 1px solid var(--card-border);
+    background: rgba(255, 255, 255, 0.055);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.12s ease, background 0.2s ease, border-color 0.2s ease;
+  }
+  .battleship-cell:active:not(.shot) { transform: scale(0.94); }
+  .battleship-cell.miss { background: rgba(120, 160, 255, 0.12); color: var(--accent-3); }
+  .battleship-cell.hit { background: rgba(255, 143, 163, 0.18); border-color: var(--accent-1); color: var(--accent-1); }
+  .battleship-cell.shot { cursor: default; }
+
+  .word-panel {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow);
+  }
+
+  .word-display {
+    text-align: center;
+    font-size: 30px;
+    letter-spacing: 8px;
+    font-weight: 800;
+    margin: 12px 0 18px;
+    color: var(--accent-3);
+    word-break: break-word;
+  }
+
+  .word-input-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .word-input {
+    flex: 1;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1px solid var(--card-border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 18px;
+    font-family: inherit;
+    outline: none;
+    text-transform: uppercase;
+  }
+
+  .word-submit {
+    width: 54px;
+    height: 50px;
+    border-radius: 14px;
+    border: none;
+    background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+    color: #2a1420;
+    font-size: 20px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .word-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 12px;
+  }
+
+
+  /* Global Plim sound button */
+  .sound-toggle {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    z-index: 30;
+    border: 1px solid var(--card-border);
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 10px 13px;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 22px rgba(0,0,0,0.25);
+  }
+  .sound-toggle.on {
+    border-color: rgba(255, 178, 107, 0.55);
+    color: var(--accent-2);
+    background: rgba(255, 178, 107, 0.12);
+  }
+  .sound-toggle:active { transform: scale(0.96); }
+
+  .battleship-help {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 13px;
+    margin: -2px 0 14px;
+    line-height: 1.4;
+  }
+  .battleship-boards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .battle-board-title {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--accent-3);
+    margin-bottom: 8px;
+  }
+  .battleship-boards .battleship-grid {
+    max-width: none;
+    margin: 0;
+    gap: 6px;
+  }
+  .battleship-cell.ship {
+    background: rgba(255, 178, 107, 0.14);
+    border-color: rgba(255, 178, 107, 0.45);
+    color: var(--accent-2);
+  }
+  .battleship-cell.enemy:not(.shot) {
+    background: rgba(201, 167, 255, 0.08);
+  }
+  .battleship-cell.enemy:not(.shot):active,
+  .battleship-cell.player:not(.shot):active {
+    transform: scale(0.94);
+  }
+  .battle-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  @media (max-width: 460px) {
+    .battleship-boards { grid-template-columns: 1fr; }
+    .battleship-boards .battleship-grid { max-width: 330px; margin: 0 auto; }
+  }
+
+</style>
+</head>
+<body>
+
+<!-- Animated background -->
+<div class="bg-animation">
+  <div class="floating-shape shape-1"></div>
+  <div class="floating-shape shape-2"></div>
+  <div class="floating-shape shape-3"></div>
+</div>
+
+
+<div class="plim-companion emotion-normal" id="plim-companion" aria-hidden="true">
+  <div class="plim-companion-inner">
+    <div class="plim-companion-body">
+      <div class="p-hair one"></div>
+      <div class="p-hair two"></div>
+      <div class="p-hair three"></div>
+      <div class="p-eyes"><div class="p-eye"></div><div class="p-eye"></div></div>
+      <div class="p-cheek left"></div>
+      <div class="p-cheek right"></div>
+      <div class="p-mouth">
+        <div class="p-teeth">
+          <div class="p-tooth"></div>
+          <div class="p-tooth missing"></div>
+          <div class="p-tooth"></div>
+          <div class="p-tooth"></div>
+        </div>
+      </div>
+      <div class="p-foot left"></div>
+      <div class="p-foot right"></div>
+    </div>
+  </div>
+</div>
+
+<button class="sound-toggle" id="sound-toggle" type="button">🔇 Sound</button>
+
+<div class="app">
+
+  <!-- HOME SCREEN -->
+  <div class="screen active" id="screen-home">
+    <div class="mascot">
+      <div class="mascot-body">
+        <div class="mascot-hair hair-1"></div>
+        <div class="mascot-hair hair-2"></div>
+        <div class="mascot-hair hair-3"></div>
+        <div class="mascot-eyes">
+          <div class="mascot-eye"></div>
+          <div class="mascot-eye"></div>
+        </div>
+        <div class="mascot-cheeks mascot-cheek-left"></div>
+        <div class="mascot-cheeks mascot-cheek-right"></div>
+        <div class="mascot-mouth">
+          <div class="mascot-teeth">
+            <div class="tooth"></div>
+            <div class="tooth missing"></div>
+            <div class="tooth"></div>
+            <div class="tooth"></div>
+          </div>
+        </div>
+      </div>
+      <div class="mascot-name">Hi, I'm Plim! 👋</div>
+    </div>
+    <h1 class="title">Five Minutes</h1>
+    <p class="subtitle">Tell me what happened.<br/>Then let's steal five minutes from a bad day.</p>
+    <p class="friendly-note">Not a therapist. Just Plim with snacks.</p>
+    
+    <div class="plim-story">
+      <div class="plim-story-title">About Plim</div>
+      Plim lost his front tooth eating popcorn last Tuesday. He still smiles anyway. He has three hairs because life is complicated enough. He's here to listen, make you laugh, and remind you that bad days are temporary — but snacks are forever. 🍿
+    </div>
+
+    <!-- Plim Secrets Card -->
+    <div class="secrets-card" id="btn-secrets">
+      <div class="secrets-card-content">
+        <div class="secrets-icon">🔒</div>
+        <div class="secrets-text">
+          <div class="secrets-title">Plim Secrets</div>
+          <div class="secrets-subtitle">Unlock hidden stories and jokes</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="textarea-wrap">
+      <textarea id="complaint" placeholder="Spill the tea, rant away, or just say everything sucks — I've got you."></textarea>
+    </div>
+    <button class="primary-btn" id="btn-letout">Let it out</button>
+    <p class="hint">No judgment. Just vibes. 💫</p>
+  </div>
+
+  <!-- SUPPORT SCREEN -->
+  <div class="screen" id="screen-support">
+    <div class="top-bar">
+      <button class="back-btn" data-back="home">←</button>
+      <div class="screen-title">A little hug</div>
+    </div>
+    <div id="support-content"></div>
+  </div>
+
+
+  <!-- CHAT SCREEN -->
+  <div class="screen" id="screen-chat">
+    <div class="top-bar">
+      <button class="back-btn" data-back="home">←</button>
+      <div class="screen-title">Chat with Plim</div>
+    </div>
+    <div class="chat-shell">
+      <div class="chat-messages" id="chat-messages"></div>
+      <div class="chat-distractions">
+        <div class="distraction-question">Need a tiny distraction?</div>
+        <div class="cards">
+          <div class="card" data-chat-go="joke">
+            <span class="card-emoji">😂</span>
+            <div class="card-label">Make me laugh</div>
+          </div>
+          <div class="card" data-chat-go="games">
+            <span class="card-emoji">🎮</span>
+            <div class="card-label">Play games</div>
+          </div>
+          <div class="card" data-chat-go="poem">
+            <span class="card-emoji">✍️</span>
+            <div class="card-label">Write together</div>
+          </div>
+          <div class="card" data-chat-go="story">
+            <span class="card-emoji">📖</span>
+            <div class="card-label">Tell me a story</div>
+          </div>
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <textarea class="chat-input" id="chat-input" placeholder="Tell Plim what happened..."></textarea>
+        <button class="chat-send-btn" id="chat-send">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOKE SCREEN -->
+  <div class="screen" id="screen-joke">
+    <div class="top-bar">
+      <button class="back-btn" data-back="chat">←</button>
+      <div class="screen-title">A silly joke</div>
+    </div>
+    <div class="emoji-big">😂</div>
+    <div class="joke-card" id="joke-text">Loading a giggle...</div>
+    <button class="secondary-btn" id="btn-next-joke">Another one 🎲</button>
+  </div>
+
+
+
+  <!-- GAMES MENU SCREEN -->
+  <div class="screen" id="screen-games">
+    <div class="top-bar">
+      <button class="back-btn" data-back="chat">←</button>
+      <div class="screen-title">Games with Plim</div>
+    </div>
+    <div class="emoji-big">🎮</div>
+    <p class="subtitle">Pick a tiny game. Plim promises to act normal. He is lying.</p>
+    <div class="games-menu-grid">
+      <div class="game-menu-card" data-game="ttt">
+        <div class="game-menu-emoji">❌</div>
+        <div>
+          <div class="game-menu-title">Tic-tac-toe</div>
+          <div class="game-menu-subtitle">Classic battle against a two-toothed genius.</div>
+        </div>
+      </div>
+      <div class="game-menu-card" data-game="battleship">
+        <div class="game-menu-emoji">🚢</div>
+        <div>
+          <div class="game-menu-title">Mini Battleship</div>
+          <div class="game-menu-subtitle">5x5 ocean. Three ships. Many Plim complaints.</div>
+        </div>
+      </div>
+      <div class="game-menu-card" data-game="word">
+        <div class="game-menu-emoji">🔤</div>
+        <div>
+          <div class="game-menu-title">Guess Plim's Word</div>
+          <div class="game-menu-subtitle">Guess letters before Plim becomes too proud.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MINI BATTLESHIP SCREEN -->
+  <div class="screen" id="screen-battleship">
+    <div class="top-bar">
+      <button class="back-btn" data-back="games">←</button>
+      <div class="screen-title">Mini Battleship</div>
+    </div>
+    <div class="plim-game-comment" id="battleship-comment">Place your 3 ships. Plim promises not to peek. He is lying emotionally.</div>
+    <div class="battleship-help" id="battleship-help">Step 1: tap 3 squares on your ocean, then press Ready.</div>
+    <div class="battleship-boards">
+      <div>
+        <div class="battle-board-title">Your ocean</div>
+        <div class="battleship-grid" id="battleship-player-grid"></div>
+      </div>
+      <div>
+        <div class="battle-board-title">Plim's ocean</div>
+        <div class="battleship-grid" id="battleship-enemy-grid"></div>
+      </div>
+    </div>
+    <div class="battle-actions">
+      <button class="secondary-btn" id="btn-battleship-ready">Ready ✅</button>
+      <button class="secondary-btn" id="btn-battleship-reset">New battle 🚢</button>
+    </div>
+  </div>
+
+  <!-- GUESS WORD SCREEN -->
+  <div class="screen" id="screen-word">
+    <div class="top-bar">
+      <button class="back-btn" data-back="games">←</button>
+      <div class="screen-title">Guess Plim's Word</div>
+    </div>
+    <div class="plim-game-comment" id="word-comment">I picked a word. The word is already nervous.</div>
+    <div class="word-panel">
+      <div class="word-display" id="word-display">_ _ _ _</div>
+      <div class="word-input-row">
+        <input class="word-input" id="word-input" maxlength="1" placeholder="A" />
+        <button class="word-submit" id="word-submit">➤</button>
+      </div>
+      <div class="word-meta">
+        <div id="word-wrong">Wrong: 0/6</div>
+        <div id="word-used">Used: —</div>
+      </div>
+    </div>
+    <button class="secondary-btn" id="btn-word-reset">New word 🔄</button>
+  </div>
+
+  <!-- TIC-TAC-TOE SCREEN -->
+  <div class="screen" id="screen-ttt">
+    <div class="top-bar">
+      <button class="back-btn" data-back="games">←</button>
+      <div class="screen-title">Tic-tac-toe</div>
+    </div>
+    <div class="ttt-status" id="ttt-status">You're X. Your move!</div>
+    <div class="ttt-board" id="ttt-board"></div>
+    <button class="secondary-btn" id="btn-ttt-reset">New game 🔄</button>
+  </div>
+
+  <!-- POEM SCREEN -->
+  <div class="screen" id="screen-poem">
+    <div class="top-bar">
+      <button class="back-btn" data-back="chat">←</button>
+      <div class="screen-title">Write a poem</div>
+    </div>
+    <div id="poem-content"></div>
+  </div>
+
+  <!-- STORY SCREEN -->
+  <div class="screen" id="screen-story">
+    <div class="top-bar">
+      <button class="back-btn" data-back="chat">←</button>
+      <div class="screen-title">A funny story</div>
+    </div>
+    <div class="emoji-big">📖</div>
+    <div class="story-card" id="story-card"></div>
+    <button class="secondary-btn" id="btn-next-story">Another one 🎲</button>
+  </div>
+
+  <!-- PLIM SECRETS SCREEN -->
+  <div class="screen" id="screen-secrets">
+    <div class="top-bar">
+      <button class="back-btn" data-back="home">←</button>
+      <div class="screen-title">Plim Secrets</div>
+    </div>
+    <div id="secrets-content"></div>
+  </div>
+
+  <!-- SECRET DETAIL SCREEN -->
+  <div class="screen" id="screen-secret-detail">
+    <div class="top-bar">
+      <button class="back-btn" data-back="secrets">←</button>
+      <div class="screen-title">Secret</div>
+    </div>
+    <div id="secret-detail-content"></div>
+  </div>
+
+  <!-- Support section (appears on all screens) -->
+  <div class="support-section">
+    <a href="#" class="support-btn" id="support-link">Enjoyed this little friend? Support the project 💛</a>
+  </div>
+
+</div>
+
+<script>
+  const WEBHOOK_URL = "https://anxietycoach.online/webhook/plim-ai";
+  const SUPPORT_LINK = "PASTE_YOUR_DONATE_LINK_HERE"; // TODO: Telegram Stars / crypto wallet / donate page
+
+  // Telegram WebApp init
+  try {
+    if (window.Telegram && Telegram.WebApp) {
+      Telegram.WebApp.ready();
+      Telegram.WebApp.expand();
+      Telegram.WebApp.setHeaderColor && Telegram.WebApp.setHeaderColor('#1a1330');
+      Telegram.WebApp.setBackgroundColor && Telegram.WebApp.setBackgroundColor('#1a1330');
+    }
+  } catch (e) { console.warn('TG init failed', e); }
+
+
+  // ---------- Plim retro audio + vibration ----------
+  let soundEnabled = false;
+  let audioCtx = null;
+  let musicTimer = null;
+  let musicStep = 0;
+
+  function ensureAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  function vibrate(pattern = 25) {
+    try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {}
+  }
+
+  function tone(freq, duration = 0.12, type = 'square', volume = 0.035, when = 0) {
+    if (!soundEnabled) return;
+    const ctx = ensureAudio();
+    const start = ctx.currentTime + when;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, start);
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(volume, start + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + duration + 0.02);
+  }
+
+  function sweep(from, to, duration = 0.18, type = 'square', volume = 0.04) {
+    if (!soundEnabled) return;
+    const ctx = ensureAudio();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(from, now);
+    osc.frequency.exponentialRampToValueAtTime(Math.max(1, to), now + duration);
+    gain.gain.setValueAtTime(volume, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + duration + 0.03);
+  }
+
+  function playClick() { tone(520, 0.045, 'square', 0.025); vibrate(18); }
+  function playShot() { sweep(900, 160, 0.17, 'sawtooth', 0.035); vibrate(30); }
+  function playHit() { tone(140, 0.08, 'square', 0.06); tone(90, 0.12, 'sawtooth', 0.045, 0.06); vibrate([35, 25, 55]); }
+  function playMiss() { sweep(420, 240, 0.12, 'sine', 0.025); vibrate(18); }
+  function plimGiggle() { tone(620, 0.07, 'square', 0.035); tone(780, 0.07, 'square', 0.035, 0.08); tone(650, 0.08, 'square', 0.035, 0.16); vibrate([20, 25, 20]); }
+  function plimSqueak() { tone(980, 0.08, 'square', 0.04); tone(1180, 0.10, 'square', 0.04, 0.09); vibrate([25, 20, 35]); }
+  function playWinSound() { tone(523, 0.10, 'square', 0.035); tone(659, 0.10, 'square', 0.035, 0.11); tone(784, 0.16, 'square', 0.035, 0.22); vibrate([50, 40, 70]); }
+  function playLoseSound() { sweep(520, 130, 0.35, 'sawtooth', 0.035); vibrate([80, 40, 80]); }
+
+  function startRetroMusic() {
+    if (!soundEnabled || musicTimer) return;
+    ensureAudio();
+    const melody = [262, 330, 392, 330, 294, 349, 440, 349];
+    musicTimer = setInterval(() => {
+      if (!soundEnabled) return;
+      const note = melody[musicStep % melody.length];
+      tone(note, 0.075, 'square', 0.012);
+      if (musicStep % 4 === 0) tone(98, 0.055, 'triangle', 0.018);
+      musicStep++;
+    }, 260);
+  }
+
+  function stopRetroMusic() {
+    if (musicTimer) clearInterval(musicTimer);
+    musicTimer = null;
+  }
+
+  function toggleSound() {
+    soundEnabled = !soundEnabled;
+    const btn = document.getElementById('sound-toggle');
+    if (soundEnabled) {
+      ensureAudio();
+      btn.textContent = '🔊 Sound';
+      btn.classList.add('on');
+      playWinSound();
+      startRetroMusic();
+    } else {
+      btn.textContent = '🔇 Sound';
+      btn.classList.remove('on');
+      stopRetroMusic();
+    }
+  }
+
+  document.getElementById('sound-toggle')?.addEventListener('click', toggleSound);
+
+  // Generate sparkles
+  function generateSparkles() {
+    const bg = document.querySelector('.bg-animation');
+    for (let i = 0; i < 30; i++) {
+      const sparkle = document.createElement('div');
+      sparkle.className = 'sparkle';
+      sparkle.style.left = Math.random() * 100 + '%';
+      sparkle.style.top = Math.random() * 100 + '%';
+      sparkle.style.animationDelay = Math.random() * 3 + 's';
+      sparkle.style.animationDuration = (2 + Math.random() * 2) + 's';
+      bg.appendChild(sparkle);
+    }
+  }
+
+  // Generate floating emojis
+  function generateFloatingEmojis() {
+    const bg = document.querySelector('.bg-animation');
+    const emojis = ['✨', '☁️', '😄', '🎈', '💫', '🌟'];
+    for (let i = 0; i < 6; i++) {
+      const emoji = document.createElement('div');
+      emoji.className = 'floating-emoji';
+      emoji.textContent = emojis[i % emojis.length];
+      emoji.style.left = Math.random() * 100 + '%';
+      emoji.style.animationDelay = Math.random() * 25 + 's';
+      emoji.style.animationDuration = (20 + Math.random() * 10) + 's';
+      bg.appendChild(emoji);
+    }
+  }
+
+  generateSparkles();
+  generateFloatingEmojis();
+
+  // Support link
+  document.getElementById('support-link').addEventListener('click', (e) => {
+    e.preventDefault();
+    window.open(SUPPORT_LINK, "_blank");
+  });
+
+  // ---------- Screen navigation ----------
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById('screen-' + id);
+    if (target) target.classList.add('active');
+    const supportSection = document.querySelector('.support-section');
+    if (supportSection) {
+      // Keep donate soft. Do not show it after every game/back action.
+      supportSection.style.display = (id === 'home') ? 'block' : 'none';
+    }
+    setPlimEmotionForScreen(id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ---------- Living Plim companion ----------
+  const plimCompanion = document.getElementById('plim-companion');
+
+  function setPlimEmotion(emotion = 'normal') {
+    if (!plimCompanion) return;
+    plimCompanion.className = `plim-companion emotion-${emotion}`;
+  }
+
+  function setPlimEmotionForScreen(id) {
+    const map = {
+      home: 'happy',
+      chat: 'supportive',
+      support: 'supportive',
+      joke: 'laughing',
+      games: 'happy',
+      ttt: 'normal',
+      battleship: 'surprised',
+      word: 'thinking',
+      poem: 'thinking',
+      story: 'happy',
+      secrets: 'surprised',
+      'secret-detail': 'surprised'
+    };
+    setPlimEmotion(map[id] || 'normal');
+  }
+
+  function movePlimRandomly() {
+    if (!plimCompanion) return;
+    const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+    const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+    const width = plimCompanion.offsetWidth || 90;
+    const height = plimCompanion.offsetHeight || 110;
+    const maxX = Math.max(8, vw - width - 18);
+    const maxY = Math.max(80, vh - height - 100);
+    const x = Math.floor(8 + Math.random() * (maxX - 8));
+    const y = Math.floor(70 + Math.random() * (maxY - 70));
+    plimCompanion.style.right = 'auto';
+    plimCompanion.style.bottom = 'auto';
+    plimCompanion.style.left = x + 'px';
+    plimCompanion.style.top = y + 'px';
+  }
+
+  setTimeout(movePlimRandomly, 500);
+  setInterval(movePlimRandomly, 4800);
+
+
+  document.querySelectorAll('[data-back]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.getAttribute('data-back');
+      showScreen(target);
+    });
+  });
+
+  // ---------- Helpers ----------
+  function getTelegramUserId() {
+    try {
+      return Telegram.WebApp.initDataUnsafe?.user?.id || null;
+    } catch (e) { return null; }
+  }
+
+  function renderLoading(message = 'Thinking...') {
+    return `
+      <div class="loading">
+        <div class="spinner"></div>
+        <div class="loading-text">${message}</div>
+      </div>
+    `;
+  }
+
+  function renderError(message, retryFn) {
+    return `
+      <div class="error-box">
+        <div>😿 Oops — ${message}</div>
+        <button class="retry" onclick="${retryFn}">Try again</button>
+      </div>
+    `;
+  }
+
+  async function postWebhook(payload) {
+    if (!WEBHOOK_URL || WEBHOOK_URL === "PASTE_YOUR_N8N_WEBHOOK_URL_HERE") {
+      throw new Error('Webhook not configured');
+    }
+    const res = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Server error');
+    return await res.json();
+  }
+
+  // ---------- PLIM SECRETS (real consecutive-day streak) ----------
+  function trackVisit() {
+    const today = new Date();
+    const todayStr = today.toDateString();
+    const lastVisit = localStorage.getItem('plim_lastVisit');
+    let streak = parseInt(localStorage.getItem('plim_streak') || '0');
+
+    // Already counted today — don't touch the streak again
+    if (lastVisit === todayStr) {
+      return streak;
+    }
+
+    if (lastVisit) {
+      const lastDate = new Date(lastVisit);
+      const dayMs = 24 * 60 * 60 * 1000;
+      const diffDays = Math.round(
+        (new Date(todayStr).getTime() - new Date(lastDate.toDateString()).getTime()) / dayMs
+      );
+      if (diffDays === 1) {
+        streak++; // visited yesterday too — streak continues
+      } else {
+        streak = 1; // gap of 2+ days (or visited "in the future") — streak resets
+      }
+    } else {
+      streak = 1; // very first visit ever
+    }
+
+    localStorage.setItem('plim_lastVisit', todayStr);
+    localStorage.setItem('plim_streak', streak.toString());
+    return streak;
+  }
+
+  function getVisitDays() {
+    return parseInt(localStorage.getItem('plim_streak') || '0');
+  }
+
+  function getUnlockedSecrets() {
+    const days = getVisitDays();
+    return {
+      oldestJoke: days >= 7,
+      lostTooth: days >= 14,
+      babyPicture: days >= 21
+    };
+  }
+
+  document.getElementById('btn-secrets').addEventListener('click', () => {
+    trackVisit();
+    showSecretsScreen();
+  });
+
+  function showSecretsScreen() {
+    showScreen('secrets');
+    const unlocked = getUnlockedSecrets();
+    const days = getVisitDays();
+
+    const secretsContent = document.getElementById('secrets-content');
+    secretsContent.innerHTML = `
+      <div class="section-label">Your progress: ${days} days</div>
+      
+      <div class="secret-item ${unlocked.oldestJoke ? 'unlocked' : 'locked'}" data-secret="oldestJoke">
+        <div class="secret-header">
+          <div class="secret-icon">${unlocked.oldestJoke ? '🎭' : '🔒'}</div>
+          <div class="secret-title">The Oldest Joke Ever</div>
+          <div class="secret-status">${unlocked.oldestJoke ? '✓' : ''}</div>
+        </div>
+        <div class="secret-unlock-info">
+          ${unlocked.oldestJoke ? 'Unlocked!' : `Unlocks after 7 daily visits (${Math.max(0, 7 - days)} days left)`}
+        </div>
+      </div>
+
+      <div class="secret-item ${unlocked.lostTooth ? 'unlocked' : 'locked'}" data-secret="lostTooth">
+        <div class="secret-header">
+          <div class="secret-icon">${unlocked.lostTooth ? '🦷' : '🔒'}</div>
+          <div class="secret-title">The Lost Tooth Story</div>
+          <div class="secret-status">${unlocked.lostTooth ? '✓' : ''}</div>
+        </div>
+        <div class="secret-unlock-info">
+          ${unlocked.lostTooth ? 'Unlocked!' : `Unlocks after 14 daily visits (${Math.max(0, 14 - days)} days left)`}
+        </div>
+      </div>
+
+      <div class="secret-item ${unlocked.babyPicture ? 'unlocked' : 'locked'}" data-secret="babyPicture">
+        <div class="secret-header">
+          <div class="secret-icon">${unlocked.babyPicture ? '👶' : '🔒'}</div>
+          <div class="secret-title">Plim's Baby Picture</div>
+          <div class="secret-status">${unlocked.babyPicture ? '✓' : ''}</div>
+        </div>
+        <div class="secret-unlock-info">
+          ${unlocked.babyPicture ? 'Unlocked!' : `Unlocks after 21 daily visits (${Math.max(0, 21 - days)} days left)`}
+        </div>
+      </div>
+    `;
+
+    secretsContent.querySelectorAll('.secret-item.unlocked').forEach(el => {
+      el.addEventListener('click', () => {
+        const secret = el.getAttribute('data-secret');
+        showSecretDetail(secret);
+      });
+    });
+  }
+
+  function showSecretDetail(secret) {
+    showScreen('secret-detail');
+    const detailContent = document.getElementById('secret-detail-content');
+
+    if (secret === 'oldestJoke') {
+      showOldestJoke(detailContent);
+    } else if (secret === 'lostTooth') {
+      showLostToothStory(detailContent);
+    } else if (secret === 'babyPicture') {
+      showBabyPicture(detailContent);
+    }
+  }
+
+  function showOldestJoke(container) {
+    container.innerHTML = `
+      <div class="secret-content">
+        <div class="secret-content-title dramatic-text">The Oldest Joke Ever</div>
+        <div class="secret-content-text dramatic-text" id="joke-reveal">Loading ancient humor...</div>
+      </div>
+    `;
+
+    const reveal = document.getElementById('joke-reveal');
+    
+    setTimeout(() => {
+      reveal.textContent = 'Translating from cave language...';
+      reveal.classList.add('dramatic-text');
+    }, 1500);
+
+    setTimeout(() => {
+      reveal.textContent = 'Ready?';
+      reveal.classList.add('dramatic-text');
+    }, 3000);
+
+    setTimeout(() => {
+      reveal.innerHTML = `
+        <div style="font-size: 24px; font-weight: 700; margin-bottom: 16px;">Merchant...</div>
+      `;
+      reveal.classList.add('dramatic-text');
+    }, 4500);
+
+    setTimeout(() => {
+      reveal.innerHTML += `
+        <div style="margin-top: 20px; font-size: 14px; color: var(--text-dim);">
+          That's it.<br/>
+          People had lower expectations back then.
+        </div>
+        <div class="achievement">
+          <div class="achievement-icon">🏆</div>
+          <div class="achievement-text">Incredible Patience</div>
+        </div>
+      `;
+      reveal.classList.add('dramatic-text');
+    }, 6500);
+  }
+
+  function showLostToothStory(container) {
+    container.innerHTML = `
+      <div class="secret-content">
+        <div class="secret-content-title">🦷 The Lost Tooth Story</div>
+        <div class="secret-content-text" style="text-align: left;">
+          It was a Tuesday. Plim was minding his own business, watching a movie, eating popcorn like a responsible adult.
+          <br/><br/>
+          Then it happened. A kernel. A rogue, unpopped kernel hiding among the fluffy white clouds of joy.
+          <br/><br/>
+          CRUNCH.
+          <br/><br/>
+          Plim's front tooth didn't stand a chance. It flew across the room like a tiny white projectile. His cat chased it. The cat still has it. Plim refuses to negotiate.
+          <br/><br/>
+          Now he smiles with a gap. He says it's aerodynamic. He says it helps him talk faster. He says a lot of things.
+          <br/><br/>
+          The truth? He's brave. And he still eats popcorn. Every Tuesday. 🍿
+        </div>
+      </div>
+    `;
+  }
+
+  function showBabyPicture(container) {
+    container.innerHTML = `
+      <div class="secret-content">
+        <div class="secret-content-title">👶 Baby Plim</div>
+        <div class="baby-plim">
+          <div class="baby-plim-body"></div>
+          <div class="baby-plim-hair baby-hair-1"></div>
+          <div class="baby-plim-hair baby-hair-2"></div>
+          <div class="baby-plim-hair baby-hair-3"></div>
+          <div class="baby-plim-eyes">
+            <div class="baby-plim-eye"></div>
+            <div class="baby-plim-eye"></div>
+          </div>
+          <div class="baby-plim-cheeks baby-cheek-left"></div>
+          <div class="baby-plim-cheeks baby-cheek-right"></div>
+          <div class="baby-plim-mouth"></div>
+        </div>
+        <div class="secret-content-text" style="margin-top: 20px;">
+          Look at those three tiny hairs. Look at that gap-toothed smile. He was adorable. He still is. Some things never change. 💕
+        </div>
+      </div>
+    `;
+  }
+
+  // ---------- HOME -> CHAT SUPPORT ----------
+  const btnLetOut = document.getElementById('btn-letout');
+  const complaint = document.getElementById('complaint');
+  const chatMessages = document.getElementById('chat-messages');
+  const chatInput = document.getElementById('chat-input');
+  const chatSend = document.getElementById('chat-send');
+  let chatStarted = false;
+
+  function addChatBubble(who, text, extraClass = '') {
+    const bubble = document.createElement('div');
+    bubble.className = `chat-bubble ${who} ${extraClass}`.trim();
+    bubble.textContent = text;
+    chatMessages.appendChild(bubble);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    return bubble;
+  }
+
+  async function sendSupportMessage(text) {
+    const clean = String(text || '').trim();
+    if (!clean) return;
+
+    addChatBubble('user', clean);
+    chatInput.value = '';
+    setPlimEmotion('thinking');
+    const thinkingBubble = addChatBubble('plim', 'Plim is thinking...', 'thinking');
+
+    try {
+      const data = await postWebhook({
+        type: 'support',
+        text: clean,
+        telegram_user_id: getTelegramUserId()
+      });
+
+      const reply = data?.support || "I hear you, bro. That sounds heavy. Stay here with me for a minute — we don't have to fix the whole day at once.";
+      thinkingBubble.classList.remove('thinking');
+      thinkingBubble.textContent = reply;
+      setPlimEmotion('supportive');
+    } catch (err) {
+      thinkingBubble.classList.remove('thinking');
+      thinkingBubble.textContent = "My brain tripped over a cable, but I'm still here with you. Tell me again, slowly. Plim has snacks and patience.";
+      setPlimEmotion('supportive');
+    }
+
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function openChatWithInitialText(text) {
+    showScreen('chat');
+    setPlimEmotion('supportive');
+
+    if (!chatStarted) {
+      chatMessages.innerHTML = '';
+      addChatBubble('plim', "Drop on the couch, bro. Tell Plim what happened. No judgment — just vibes and one missing tooth.");
+      chatStarted = true;
+    }
+
+    if (text && text.trim()) {
+      sendSupportMessage(text.trim());
+    }
+
+    setTimeout(() => chatInput.focus(), 250);
+  }
+
+  btnLetOut.addEventListener('click', () => {
+    const text = complaint.value.trim();
+    if (!text) {
+      complaint.focus();
+      complaint.style.borderColor = 'rgba(255, 100, 100, 0.6)';
+      setTimeout(() => complaint.style.borderColor = '', 1200);
+      return;
+    }
+    openChatWithInitialText(text);
+  });
+
+  chatSend.addEventListener('click', () => sendSupportMessage(chatInput.value));
+  chatInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendSupportMessage(chatInput.value);
+    }
+  });
+
+  document.querySelectorAll('[data-chat-go]').forEach(el => {
+    el.addEventListener('click', () => {
+      const go = el.getAttribute('data-chat-go');
+      if (go === 'joke') showJoke();
+      else if (go === 'games') showScreen('games');
+      else if (go === 'poem') startPoem();
+      else if (go === 'story') showStory();
+    });
+  });
+
+
+  document.querySelectorAll('[data-game]').forEach(el => {
+    el.addEventListener('click', () => {
+      const game = el.getAttribute('data-game');
+      playClick();
+      if (game === 'ttt') { showScreen('ttt'); resetTTT(); }
+      if (game === 'battleship') { showScreen('battleship'); resetBattleship(); }
+      if (game === 'word') { showScreen('word'); resetWordGame(); }
+    });
+  });
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  }
+
+  // ---------- JOKES ----------
+  const jokes = [
+`Plim brought his sheep to the market to sell it. All day people kept squeezing the sheep's back to check how meaty it was. By evening another buyer reached for the sheep. Plim stopped him and said, "No more! I brought her here to sell, not to give free massages!"`,
+
+`Plim couldn't get his donkey into the garden. His friend said, "Rub pepper on its butt." The donkey ran away. Plim couldn't catch it, so he rubbed pepper on his own butt. He caught the donkey, tied it up and said, "Hold him. I'm doing two more laps."`,
+
+`Plim fell into a well. First try failed. Second try failed. Third try failed. Then Plim sighed and said, "One more try... and if it doesn't work, I'm going home."`,
+
+`Plim was walking through the forest when a fox stopped her car and said, "Look inside! Nice car, right?" Plim leaned in. The fox trapped his head in the window, smacked his butt with a branch and drove away. Plim stood there thinking and finally said, "I need a car too... or at least a car door."`,
+
+`Plim drew such a realistic fly that his teacher tried to slap it and hurt her hand. The teacher called Plim's father. His father smiled and said, "That's nothing. Yesterday Plim drew a door on our wall... I spent ten minutes trying to open it."`,
+
+`Plim tried to fight a pigeon. The pigeon is still laughing.`,
+
+`Plim challenged a kangaroo to a boxing match. The referee quit before the first round.`,
+
+`Plim opened a gym. Even the dumbbells escaped.`,
+
+`Plim tried to cook pasta. Italy declared a national emergency.`,
+
+`Plim entered a marathon and accidentally won a hot dog eating contest.`,
+
+`Plim thought Wi-Fi was a martial art.`,
+
+`Plim spent three hours looking for his hat. It was on his head the whole time. He called it a successful search.`
+  ];
+  function showJoke() {
+    showScreen('joke');
+    setPlimEmotion('laughing');
+    const j = jokes[Math.floor(Math.random() * jokes.length)];
+    document.getElementById('joke-text').innerHTML = escapeHtml(j).replace(/\n/g, '<br/>');
+  }
+  document.getElementById('btn-next-joke').addEventListener('click', showJoke);
+
+  // ---------- TIC-TAC-TOE ----------
+  const tttBoard = document.getElementById('ttt-board');
+  const tttStatus = document.getElementById('ttt-status');
+  let tttState, tttOver;
+
+  function resetTTT() {
+    tttState = Array(9).fill('');
+    tttOver = false;
+    tttStatus.textContent = "You're X. Your move!";
+    renderTTT();
+  }
+
+  function renderTTT() {
+    tttBoard.innerHTML = '';
+    tttState.forEach((val, i) => {
+      const cell = document.createElement('div');
+      cell.className = 'ttt-cell' + (val ? ' taken ' + val : '');
+      cell.textContent = val;
+      cell.addEventListener('click', () => tttMove(i));
+      tttBoard.appendChild(cell);
+    });
+  }
+
+  function tttMove(i) {
+    if (tttOver || tttState[i]) return;
+    playClick();
+    tttState[i] = 'x';
+    renderTTT();
+    const winner = checkTTTWinner();
+    if (winner) return finishTTT(winner);
+    if (!tttState.includes('')) return finishTTT('draw');
+    tttStatus.textContent = 'Bot is thinking... 🤖';
+    setTimeout(() => {
+      const botMove = tttBotMove();
+      playClick();
+      tttState[botMove] = 'o';
+      renderTTT();
+      const w2 = checkTTTWinner();
+      if (w2) return finishTTT(w2);
+      if (!tttState.includes('')) return finishTTT('draw');
+      tttStatus.textContent = "Your turn!";
+    }, 450);
+  }
+
+  function tttBotMove() {
+    const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    for (const p of ['o','x']) {
+      for (const line of lines) {
+        const vals = line.map(i => tttState[i]);
+        if (vals.filter(v => v === p).length === 2 && vals.includes('')) {
+          return line[vals.indexOf('')];
+        }
+      }
+    }
+    if (!tttState[4]) return 4;
+    const corners = [0,2,6,8].filter(i => !tttState[i]);
+    if (corners.length) return corners[Math.floor(Math.random()*corners.length)];
+    const sides = [1,3,5,7].filter(i => !tttState[i]);
+    return sides[Math.floor(Math.random()*sides.length)];
+  }
+
+  function checkTTTWinner() {
+    const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    for (const line of lines) {
+      const [a,b,c] = line;
+      if (tttState[a] && tttState[a] === tttState[b] && tttState[a] === tttState[c]) {
+        setTimeout(() => {
+          const cells = tttBoard.children;
+          [a,b,c].forEach(i => cells[i] && cells[i].classList.add('win'));
+        }, 10);
+        return tttState[a];
+      }
+    }
+    return null;
+  }
+
+  function finishTTT(result) {
+    tttOver = true;
+    if (result === 'x') { tttStatus.textContent = '🎉 You won! Take that, bad day.'; setPlimEmotion('surprised'); plimSqueak(); playWinSound(); }
+    else if (result === 'o') { tttStatus.textContent = '🤖 Plim is a genius. But you tried, and that counts.'; setPlimEmotion('laughing'); plimGiggle(); playLoseSound(); }
+    else { tttStatus.textContent = "🤝 It's a draw. Like your day — unresolved but fine."; setPlimEmotion('normal'); tone(440, 0.08, 'square', 0.025); }
+  }
+
+  document.getElementById('btn-ttt-reset').addEventListener('click', resetTTT);
+
+
+  // ---------- MINI BATTLESHIP ----------
+  const battleshipPlayerGrid = document.getElementById('battleship-player-grid');
+  const battleshipEnemyGrid = document.getElementById('battleship-enemy-grid');
+  const battleshipComment = document.getElementById('battleship-comment');
+  const battleshipHelp = document.getElementById('battleship-help');
+  const battleshipReadyBtn = document.getElementById('btn-battleship-ready');
+
+  let bsPlimShips = new Set();
+  let bsPlayerShips = new Set();
+  let bsPlayerShots = new Set();
+  let bsPlimShots = new Set();
+  let bsPlayerHits = 0;
+  let bsPlimHits = 0;
+  let bsPhase = 'placing';
+  let bsTurn = 'player';
+
+  const bsMissLines = [
+    'Nice shot... at the ocean.',
+    'You scared a fish. The fish is filing a complaint.',
+    'My ships are fine. My confidence is huge.',
+    'That square was water. Very wet, very dramatic.'
+  ];
+  const bsHitLines = [
+    'HEY! That was my snack boat!',
+    'Direct hit. My sheep was almost on that one.',
+    'You hit it! I will remember this betrayal.',
+    'Ouch. That ship had dreams.'
+  ];
+  const bsPlimHitLines = [
+    'HAHA! I hit your ship. Pure talent. Probably.',
+    'Boom! Plim is basically an admiral.',
+    'I hit it! Tell the donkey I am dangerous.',
+    'That was not luck. That was suspiciously lucky skill.'
+  ];
+  const bsPlimMissLines = [
+    'I missed. The ocean looked guilty though.',
+    'My shot went to buy snacks.',
+    'I meant to scare the fish.',
+    'That was a warning shot. Very artistic.'
+  ];
+
+  function randomShipSet() {
+    const ships = new Set();
+    while (ships.size < 3) ships.add(Math.floor(Math.random() * 25));
+    return ships;
+  }
+
+  function resetBattleship() {
+    bsPlimShips = randomShipSet();
+    bsPlayerShips = new Set();
+    bsPlayerShots = new Set();
+    bsPlimShots = new Set();
+    bsPlayerHits = 0;
+    bsPlimHits = 0;
+    bsPhase = 'placing';
+    bsTurn = 'player';
+    battleshipComment.textContent = 'Place your 3 ships. Plim promises not to peek. He is lying emotionally.';
+    battleshipHelp.textContent = 'Step 1: tap 3 squares on your ocean, then press Ready.';
+    battleshipReadyBtn.disabled = true;
+    setPlimEmotion('thinking');
+    renderBattleship();
+  }
+
+  function renderBattleship() {
+    battleshipPlayerGrid.innerHTML = '';
+    battleshipEnemyGrid.innerHTML = '';
+
+    for (let i = 0; i < 25; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'battleship-cell player';
+      if (bsPlayerShips.has(i)) {
+        cell.classList.add('ship');
+        cell.textContent = '🚢';
+      }
+      if (bsPlimShots.has(i)) {
+        cell.classList.add('shot');
+        if (bsPlayerShips.has(i)) {
+          cell.classList.add('hit');
+          cell.textContent = '💥';
+        } else {
+          cell.classList.add('miss');
+          cell.textContent = '🌊';
+        }
+      }
+      cell.addEventListener('click', () => placePlayerShip(i));
+      battleshipPlayerGrid.appendChild(cell);
+    }
+
+    for (let i = 0; i < 25; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'battleship-cell enemy';
+      if (bsPlayerShots.has(i)) {
+        cell.classList.add('shot');
+        if (bsPlimShips.has(i)) {
+          cell.classList.add('hit');
+          cell.textContent = '💥';
+        } else {
+          cell.classList.add('miss');
+          cell.textContent = '🌊';
+        }
+      } else {
+        cell.textContent = bsPhase === 'battle' ? '?' : '·';
+      }
+      cell.addEventListener('click', () => battleshipPlayerShoot(i));
+      battleshipEnemyGrid.appendChild(cell);
+    }
+  }
+
+  function placePlayerShip(i) {
+    if (bsPhase !== 'placing') return;
+    playClick();
+    if (bsPlayerShips.has(i)) {
+      bsPlayerShips.delete(i);
+    } else if (bsPlayerShips.size < 3) {
+      bsPlayerShips.add(i);
+    } else {
+      battleshipComment.textContent = 'Only 3 ships, bro. The ocean is tiny and nervous.';
+      plimSqueak();
+    }
+    battleshipReadyBtn.disabled = bsPlayerShips.size !== 3;
+    battleshipHelp.textContent = `Ships placed: ${bsPlayerShips.size}/3`;
+    renderBattleship();
+  }
+
+  function startBattleshipBattle() {
+    if (bsPlayerShips.size !== 3) {
+      battleshipComment.textContent = 'Place 3 ships first. Plim is dramatic but fair.';
+      plimSqueak();
+      return;
+    }
+    playWinSound();
+    bsPhase = 'battle';
+    bsTurn = 'player';
+    battleshipReadyBtn.disabled = true;
+    battleshipHelp.textContent = 'Step 2: shoot Plim’s ocean. Then Plim shoots yours.';
+    battleshipComment.textContent = 'Battle started. My ships are wearing tiny helmets.';
+    setPlimEmotion('surprised');
+    renderBattleship();
+  }
+
+  function battleshipPlayerShoot(i) {
+    if (bsPhase !== 'battle' || bsTurn !== 'player' || bsPlayerShots.has(i)) return;
+    bsPlayerShots.add(i);
+    bsTurn = 'plim';
+    playShot();
+
+    if (bsPlimShips.has(i)) {
+      bsPlayerHits++;
+      playHit();
+      battleshipComment.textContent = bsHitLines[Math.floor(Math.random() * bsHitLines.length)];
+      setPlimEmotion('surprised');
+      if (bsPlayerHits >= bsPlimShips.size) {
+        bsPhase = 'over';
+        battleshipComment.textContent = 'You sunk my fleet. My donkey is already writing a sad song.';
+        setPlimEmotion('supportive');
+        plimSqueak();
+        playWinSound();
+        renderBattleship();
+        return;
+      }
+    } else {
+      playMiss();
+      battleshipComment.textContent = bsMissLines[Math.floor(Math.random() * bsMissLines.length)];
+      setPlimEmotion('laughing');
+    }
+
+    renderBattleship();
+    setTimeout(plimBattleshipShoot, 650);
+  }
+
+  function plimBattleshipShoot() {
+    if (bsPhase !== 'battle') return;
+    const available = [];
+    for (let i = 0; i < 25; i++) if (!bsPlimShots.has(i)) available.push(i);
+    const shot = available[Math.floor(Math.random() * available.length)];
+    bsPlimShots.add(shot);
+    playShot();
+
+    if (bsPlayerShips.has(shot)) {
+      bsPlimHits++;
+      playHit();
+      battleshipComment.textContent = bsPlimHitLines[Math.floor(Math.random() * bsPlimHitLines.length)];
+      setPlimEmotion('laughing');
+      if (bsPlimHits >= bsPlayerShips.size) {
+        bsPhase = 'over';
+        battleshipComment.textContent = 'Plim won the sea. I will now act humble for 0 seconds.';
+        setPlimEmotion('laughing');
+        plimGiggle();
+        playLoseSound();
+        renderBattleship();
+        return;
+      }
+    } else {
+      playMiss();
+      battleshipComment.textContent = bsPlimMissLines[Math.floor(Math.random() * bsPlimMissLines.length)];
+      setPlimEmotion('normal');
+    }
+
+    bsTurn = 'player';
+    renderBattleship();
+  }
+
+  battleshipReadyBtn.addEventListener('click', startBattleshipBattle);
+  document.getElementById('btn-battleship-reset').addEventListener('click', resetBattleship);
+
+  // ---------- GUESS PLIM'S WORD ----------
+  const wordDisplay = document.getElementById('word-display');
+  const wordInput = document.getElementById('word-input');
+  const wordSubmit = document.getElementById('word-submit');
+  const wordWrong = document.getElementById('word-wrong');
+  const wordUsed = document.getElementById('word-used');
+  const wordComment = document.getElementById('word-comment');
+  const WORD_BANK = ['SHEEP', 'DONKEY', 'PIZZA', 'SNACK', 'PLIM', 'TOOTH', 'FOX', 'WELL', 'HAT', 'SOCKS'];
+  let secretWord = '';
+  let guessedLetters = new Set();
+  let wrongGuesses = 0;
+  let wordOver = false;
+
+  const wordCorrectLines = [
+    'Fine. That letter was hiding badly.',
+    'Correct. My word is nervous now.',
+    'Yes. The sheep whispered it, probably.',
+    'Good guess. I am pretending to be calm.'
+  ];
+  const wordWrongLines = [
+    'Nope. My donkey also guessed that.',
+    'Wrong. The letter escaped on a tiny bicycle.',
+    'Not there. The word is laughing quietly.',
+    'No. Even my socks disagreed.'
+  ];
+
+  function resetWordGame() {
+    secretWord = WORD_BANK[Math.floor(Math.random() * WORD_BANK.length)];
+    guessedLetters = new Set();
+    wrongGuesses = 0;
+    wordOver = false;
+    wordInput.value = '';
+    wordComment.textContent = 'I picked a word. The word is already nervous.';
+    setPlimEmotion('thinking');
+    renderWordGame();
+    setTimeout(() => wordInput.focus(), 200);
+  }
+
+  function renderWordGame() {
+    const shown = secretWord.split('').map(ch => guessedLetters.has(ch) ? ch : '_').join(' ');
+    wordDisplay.textContent = shown;
+    wordWrong.textContent = `Wrong: ${wrongGuesses}/6`;
+    wordUsed.textContent = `Used: ${guessedLetters.size ? Array.from(guessedLetters).join(', ') : '—'}`;
+  }
+
+  function submitWordLetter() {
+    if (wordOver) return;
+    const letter = (wordInput.value || '').trim().toUpperCase().replace(/[^A-Z]/g, '').slice(0, 1);
+    wordInput.value = '';
+    if (!letter || guessedLetters.has(letter)) return;
+    playClick();
+    guessedLetters.add(letter);
+
+    if (secretWord.includes(letter)) {
+      wordComment.textContent = wordCorrectLines[Math.floor(Math.random() * wordCorrectLines.length)];
+      setPlimEmotion('surprised');
+      playHit();
+    } else {
+      wrongGuesses++;
+      wordComment.textContent = wordWrongLines[Math.floor(Math.random() * wordWrongLines.length)];
+      setPlimEmotion('laughing');
+      playMiss();
+    }
+
+    const solved = secretWord.split('').every(ch => guessedLetters.has(ch));
+    if (solved) {
+      wordOver = true;
+      wordComment.textContent = `You found ${secretWord}. I blame the fox.`;
+      setPlimEmotion('surprised');
+      plimSqueak();
+      playWinSound();
+    } else if (wrongGuesses >= 6) {
+      wordOver = true;
+      wordComment.textContent = `The word escaped. It was ${secretWord}. Very suspicious.`;
+      secretWord.split('').forEach(ch => guessedLetters.add(ch));
+      setPlimEmotion('happy');
+      plimGiggle();
+      playLoseSound();
+    }
+
+    renderWordGame();
+    wordInput.focus();
+  }
+
+  wordSubmit.addEventListener('click', submitWordLetter);
+  wordInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitWordLetter();
+  });
+  document.getElementById('btn-word-reset').addEventListener('click', resetWordGame);
+
+  // ---------- POEM (10-line chunks, alternating Plim/human, Finish-or-Continue) ----------
+  const poemContent = document.getElementById('poem-content');
+  const POEM_CHUNK_SIZE = 10;
+  let poemTopic = null;
+  let poemLines = [];
+
+  function startPoem() {
+    poemTopic = null;
+    poemLines = [];
+    showScreen('poem');
+    renderPoemTopics();
+  }
+
+  function renderPoemTopics() {
+    const topics = [
+      { key: 'work', emoji: '💼', label: 'Work' },
+      { key: 'love', emoji: '💘', label: 'Love' },
+      { key: 'life', emoji: '🌱', label: 'Life' },
+      { key: 'cats', emoji: '🐱', label: 'Cats' },
+      { key: 'random', emoji: '🎲', label: 'Random' }
+    ];
+    poemContent.innerHTML = `
+      <div class="section-label">Pick a topic</div>
+      <div class="topic-grid">
+        ${topics.map(t => `
+          <div class="card" data-topic="${t.key}">
+            <span class="card-emoji">${t.emoji}</span>
+            <div class="card-label">${t.label}</div>
+          </div>
+        `).join('')}
+      </div>
+      <p class="hint">Plim starts, you take turns. 10 lines, then you choose: finish or keep going. 💫</p>
+    `;
+    poemContent.querySelectorAll('[data-topic]').forEach(el => {
+      el.addEventListener('click', () => {
+        poemTopic = el.getAttribute('data-topic');
+        generateBotLine('');
+      });
+    });
+  }
+
+  async function generateBotLine(userLine) {
+    poemContent.innerHTML = `
+      ${renderPoemLines()}
+      <div class="poem-line typing">✨ Finding the right words...</div>
+    `;
+
+    let line;
+    try {
+      const data = await postWebhook({
+        type: 'poem',
+        topic: poemTopic,
+        user_line: userLine,
+        line_number: poemLines.length + 1,
+        poem_so_far: poemLines.map(l => l.text),
+        telegram_user_id: getTelegramUserId()
+      });
+      line = data?.line || fallbackBotLine(userLine);
+    } catch (err) {
+      line = fallbackBotLine(userLine);
+    }
+
+    poemLines.push({ who: 'bot', text: line });
+    renderPoemInput();
+  }
+
+  function onPoemUserSubmit(val) {
+    poemLines.push({ who: 'user', text: val });
+    if (poemLines.length % POEM_CHUNK_SIZE === 0) {
+      renderPoemChunkChoice();
+    } else {
+      generateBotLine(val);
+    }
+  }
+
+  function renderPoemChunkChoice() {
+    poemContent.innerHTML = `
+      ${renderPoemLines()}
+      <p class="hint">10 lines down. Keep riding this poem or wrap it up here?</p>
+      <button class="primary-btn" id="poem-continue">Continue +10 ➕</button>
+      <button class="secondary-btn" id="poem-finish">Finish poem 🏁</button>
+    `;
+    document.getElementById('poem-continue').addEventListener('click', () => generateBotLine(''));
+    document.getElementById('poem-finish').addEventListener('click', renderPoemDone);
+  }
+
+  function fallbackBotLine(userLine) {
+    const bank = {
+      work: [
+        "The meeting could have been an email, they said.",
+        "My coffee cup knows all my secrets now.",
+        "The spreadsheet blinked. I blinked back.",
+        "Deadline tomorrow, dreams today."
+      ],
+      love: [
+        "Your laugh is my favorite song on repeat.",
+        "I saved you the last slice of moonlight.",
+        "Even silence sounds like you.",
+        "My heart keeps misspelling your name."
+      ],
+      life: [
+        "The sun showed up uninvited today.",
+        "Small joys are hiding in the pockets of ordinary.",
+        "Tomorrow is a blank page, slightly crumpled.",
+        "I am a work in progress, and that's okay."
+      ],
+      cats: [
+        "The cat judged me silently at 3am.",
+        "A loaf of fur, a king on my keyboard.",
+        "She knocked the glass off. On purpose. Again.",
+        "Purring is the universe's lullaby."
+      ],
+      random: [
+        "A sock escaped the laundry again.",
+        "The moon is just a nightlight for overthinkers.",
+        "Somewhere, a pigeon is winning at life.",
+        "The clouds look like pizza today."
+      ]
+    };
+    const arr = bank[poemTopic] || bank.random;
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function renderPoemLines() {
+    return `
+      <div class="poem-lines">
+        ${poemLines.map(l => `
+          <div class="poem-line ${l.who}">${escapeHtml(l.text)}</div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  function renderPoemInput() {
+    poemContent.innerHTML = `
+      ${renderPoemLines()}
+      <input class="poem-input" id="poem-input" placeholder="Your line..." maxlength="120" />
+      <button class="primary-btn" id="poem-submit">Add my line ✨</button>
+    `;
+    const input = document.getElementById('poem-input');
+    const btn = document.getElementById('poem-submit');
+    input.focus();
+    const submit = () => {
+      const val = input.value.trim();
+      if (!val) return;
+      onPoemUserSubmit(val);
+    };
+    btn.addEventListener('click', submit);
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') submit();
+    });
+  }
+
+  function renderPoemDone() {
+    poemContent.innerHTML = `
+      ${renderPoemLines()}
+      <p class="hint">🎉 Your poem is complete. Save it. Share it. Read it when the day is heavy.</p>
+      <button class="secondary-btn" id="poem-again">Write another 📝</button>
+    `;
+    document.getElementById('poem-again').addEventListener('click', startPoem);
+  }
+
+  // ---------- STORIES ----------
+  const stories = [
+    {
+      title: "The Sock Rebellion",
+      body: "I did laundry yesterday. Put in 12 socks. Got out 11. The missing one left a note: 'Gone to find myself. Don't wait up.' I'm now negotiating with the dryer."
+    },
+    {
+      title: "The Cat Interview",
+      body: "My cat applied for a job as my life coach. Her first piece of advice: nap for 16 hours, scream at nothing at 4am, and knock things off tables to 'stay grounded.' Honestly? Better than my last coach."
+    },
+    {
+      title: "The Zoom Ghost",
+      body: "During a meeting, my cat walked across the keyboard and unmuted me mid-sentence. I was saying, 'and that's why I think the client is basically a potato.' The client was on the call. I still have a job. Barely."
+    },
+    {
+      title: "The Avocado Betrayal",
+      body: "I bought an avocado on Monday. Checked it Tuesday: hard as a rock. Wednesday: still hard. Thursday: hard. Friday: suddenly perfect. Saturday: brown. The avocado played me like a violin."
+    },
+    {
+      title: "The Password Crisis",
+      body: "Website: 'Your password must contain an uppercase, a number, a symbol, a hieroglyph, and the blood of a unicorn.' Me: okay. Website: 'Password cannot be the same as your last 47 passwords.' Me: *cries in ancient Sumerian*"
+    },
+    {
+      title: "The Grocery Quest",
+      body: "Went to the store for milk. Came home with: hummus, a candle that smells like 'autumn forest', fancy cheese, and zero milk. Dinner is cheese and vibes."
+    },
+    {
+      title: "The Alarm Clock War",
+      body: "Set 7 alarms. Snoozed all 7. Woke up in a panic, ran to the kitchen, made coffee, drank it, realized it was Saturday. The alarms are laughing at me. I can hear them."
+    },
+    {
+      title: "The Plant Funeral",
+      body: "My plant died. I watered it too much. Then I watered it less. Then I talked to it. Then I played it music. It still died. I held a small ceremony. The cactus next to it looked relieved."
+    }
+  ];
+
+  function showStory() {
+    showScreen('story');
+    setPlimEmotion('happy');
+    const s = stories[Math.floor(Math.random() * stories.length)];
+    document.getElementById('story-card').innerHTML = `
+      <div class="story-title">${escapeHtml(s.title)}</div>
+      <div>${escapeHtml(s.body)}</div>
+    `;
+  }
+  document.getElementById('btn-next-story').addEventListener('click', showStory);
+
+  // Track visit on app load
+  trackVisit();
+
+</script>
+</body>
+</html>
